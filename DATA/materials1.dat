@@ -1,0 +1,7 @@
+# available material types (TBD!! I just use elastic type and rho, Vp, Vs)
+# acoustic: model_number
+# elastic:     model_number 1 rho Vp  Vs  0   0  QKappa Qmu 0   0   0   0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+# anisotropic: model number 2 rho c11 c13 c15 c33 c35   c55 c12 c23 c25 0 0 0
+# poroelastic: model_number 3 rhos rhof pho c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+1  1  1200.0   2300.0   1500.0  0 0 9999 9999 0 0 0 0 0 0
+2  1  2700.0   4000.0   2500.0  0 0 9999 9999 0 0 0 0 0 0
