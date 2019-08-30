@@ -12,4 +12,3 @@ struct interfaces{
     float *z_loc;
 };
 
-

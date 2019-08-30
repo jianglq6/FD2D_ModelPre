@@ -17,8 +17,8 @@
  *
  *
  ************************************************************************/
-#include "global_used.h"
-#include "para_assign.h"
+#include "pre_global_used.h"
+#include "pre_para_assign.h"
 
 /* We use the scan-line method to achieve assignment */
 void Polygon_Fill(int IMAGE_BOT, int IMAGE_TOP, int IMAGE_LEFT, int IMAGE_RIGHT, int nx, int nz,

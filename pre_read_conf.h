@@ -1,7 +1,3 @@
-#include <string.h>
-#include <assert.h>
-#include <ctype.h>
-#include <regex.h>
 #include <stdbool.h>
 
 #define COMMENT_CHAR '#'
@@ -36,14 +32,6 @@ void read_material(int nbmodel, char *materialfile, int *material_type, int *mod
     float *val1, float *val2, float *val3, float *val4, float *val5, float *val6, float *val7,
     float *val8, float *val9, float *val10, float *val11, float *val12, float *val13, int *ierr);
 
-/* structure array of the interfaces */
-struct interfaces{
-    int   num_of_material;
-    int   npoints_interfaces;
-    float *x_loc;
-    float *z_loc;
-};
-
 /* Read interfaces data */
-struct interfaces * read_interfaces(char *interfacesfile, int *number_of_interfaces);
+struct interfaces *read_interfaces(char *interfacesfile, int *number_of_interfaces);
 

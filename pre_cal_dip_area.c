@@ -11,8 +11,8 @@
  *
  ***************************************************************************/
 
-#include "global_used.h"
-#include "cal_dip_area.h"
+#include "pre_global_used.h"
+#include "pre_cal_dip_area.h"
 
 /*************************************************************
  * function: getLayer_of_grid

@@ -19,15 +19,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "read_conf.h"
-
+#include "pre_read_conf.h"
+#include <string.h>
+#include <assert.h>
+#include <ctype.h>
+#include <regex.h>
+#include "pre_global_used.h"
 
 /* gfopen: elegant version of fopen() */
 FILE *gfopen(char *filename, char *mode)
 {
     FILE *fp;
     if ((fp = fopen(filename,mode)) == NULL) {
-        fprintf(stderr, "Cannot open %s, please check your file path and run-directory. \n",filename);
+        fprintf(stderr, "Cannot open %s\n, please check your file path and run-directory. \n",filename);
         exit(1);
     }
     return fp;
@@ -276,23 +280,48 @@ void read_material(int nbmodel, char *materialfile, int *material_type, int *mod
 
         /* Assignment */
         *(model_number  + i_useful_line)  =  (int) numtmp[0];
-        *(material_type + i_useful_line)  =  (int) numtmp[1];
-        *(val1          + i_useful_line)  =        numtmp[2];
-        *(val2          + i_useful_line)  =        numtmp[3];
-        *(val3          + i_useful_line)  =        numtmp[4];
-        *(val4          + i_useful_line)  =        numtmp[5];
-        *(val5          + i_useful_line)  =        numtmp[6];
-        *(val6          + i_useful_line)  =        numtmp[7];
-        *(val7          + i_useful_line)  =        numtmp[8];
-        *(val8          + i_useful_line)  =        numtmp[9];
-        *(val9          + i_useful_line)  =        numtmp[10];
-        *(val10         + i_useful_line)  =        numtmp[11];
-        *(val11         + i_useful_line)  =        numtmp[12];
-        *(val12         + i_useful_line)  =        numtmp[13];
-        *(val13         + i_useful_line)  =        numtmp[14];
+        //*(material_type + i_useful_line)  =  (int) numtmp[1];
+        //*(val1          + i_useful_line)  =        numtmp[2];
+        //*(val2          + i_useful_line)  =        numtmp[3];
+        //*(val3          + i_useful_line)  =        numtmp[4];
+        //*(val4          + i_useful_line)  =        numtmp[5];
+        //*(val5          + i_useful_line)  =        numtmp[6];
+        //*(val6          + i_useful_line)  =        numtmp[7];
+        //*(val7          + i_useful_line)  =        numtmp[8];
+        //*(val8          + i_useful_line)  =        numtmp[9];
+        //*(val9          + i_useful_line)  =        numtmp[10];
+        //*(val10         + i_useful_line)  =        numtmp[11];
+        //*(val11         + i_useful_line)  =        numtmp[12];
+        //*(val12         + i_useful_line)  =        numtmp[13];
+        //*(val13         + i_useful_line)  =        numtmp[14];
 
+        int model_num;
+        model_num                     =  (int) numtmp[0];
+        *(material_type + (model_num-1))  =  (int) numtmp[1];
+        *(val1          + (model_num-1))  =        numtmp[2];
+        *(val2          + (model_num-1))  =        numtmp[3];
+        *(val3          + (model_num-1))  =        numtmp[4];
+        *(val4          + (model_num-1))  =        numtmp[5];
+        *(val5          + (model_num-1))  =        numtmp[6];
+        *(val6          + (model_num-1))  =        numtmp[7];
+        *(val7          + (model_num-1))  =        numtmp[8];
+        *(val8          + (model_num-1))  =        numtmp[9];
+        *(val9          + (model_num-1))  =        numtmp[10];
+        *(val10         + (model_num-1))  =        numtmp[11];
+        *(val11         + (model_num-1))  =        numtmp[12];
+        *(val12         + (model_num-1))  =        numtmp[13];
+        *(val13         + (model_num-1))  =        numtmp[14];
+
+        // Need a error reporting to check if model_num = 0:nbmodel-1;
 
         i_useful_line ++;
+    }
+
+    /* If model number */
+    if (i_useful_line != nbmodel) {
+        printf(" Materials file error!\n");
+        *ierr = 1;
+        return;
     }
 
     fclose(file);
@@ -310,6 +339,7 @@ struct interfaces * read_interfaces(char *interfacesfile, int *number_of_interfa
     char line[MAX_BUF_LEN];
     tmp_file = tmpfile();
 
+
     /* Read every line in the file. */
     while(fgets(line, MAX_BUF_LEN, file) != NULL)
     {
@@ -321,21 +351,22 @@ struct interfaces * read_interfaces(char *interfacesfile, int *number_of_interfa
         fputs(line,tmp_file);
     }
 
-    
+
     /* Sets the file pointer at the beginning of the stream*/
     rewind(tmp_file);
 
     /* Read the temporary data file, Can not use the feof() */
     while(feof(tmp_file) != EOF)
     {
-        fscanf(tmp_file,"%d", number_of_interfaces);
+
+        fscanf(tmp_file, "%d", number_of_interfaces);
+
 
         /* Initialize the structure array interface */
         struct interfaces *interface = (struct interfaces *)malloc(*number_of_interfaces * sizeof(struct interfaces));
 
         for (i_interface = 0; i_interface < *number_of_interfaces; i_interface++) {
-            
-            printf("%d\n",i_interface);
+
             fscanf(tmp_file,"%d", &npoints_interfaces);
             interface[i_interface].npoints_interfaces = npoints_interfaces;
             interface[i_interface].x_loc = (float *) malloc(npoints_interfaces*sizeof(float));
@@ -361,9 +392,6 @@ struct interfaces * read_interfaces(char *interfacesfile, int *number_of_interfa
         break;
     }
 }
-
-
-
 
 
 
