@@ -48,7 +48,7 @@
 
 3 Usage
 
-  1) Compile: ./make
+  1) Compile: make
 
   2) change the ./DATA/Par_file, add ./DATA/STATIONS if needed, add interface and
         material file if needed;
