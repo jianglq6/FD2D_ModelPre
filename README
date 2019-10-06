@@ -1,0 +1,59 @@
+#*******************************************************************************#
+#*                                                                             *#
+#*                           FD2D_ModelPreparation                             *#
+#*                         =========================                           *#
+#*                                                                             *#
+#*              The C Program Package for media parameterization               *#
+#*                                                                             *#
+#*                                                                             *#
+#*     A signed non-commercial agreement is required to use this program.      *#
+#*             Free for non-commercial academic research ONLY.                 *#
+#*       This program is distributed WITHOUT ANY WARRANTY whatsoever.          *#
+#*       Do not redistribute this program without written permission.          *#
+#*                                                                             *#
+#*                                                                             *#
+#* Authors: Luqian Jiang   Email: jlq0608@gmail.com                            *#
+#*          Wei Zhang      Email: zhangwei@sustc.edu.cn                        *#
+#*                                                                             *#
+#* Revision History:                                                           *#
+#*   under developed ...                                                       *#
+#*******************************************************************************#
+
+
+1. Introduction
+    This package is used for simulating wave propagation in 2D complex isotropic
+    media by using staggered or Lebedev finite difference method.
+    We use different effective media parameterization method to generate grid model
+    from layered model, then we use staggered or Lebedev FD scheme to calculate
+    velocity-stress equation.
+
+2. Direcotry layout
+
+    DATA/
+        Par_file:   Configuration file
+
+    src/
+        source code for media parameterization and forward modeling
+
+    Makefie
+        makefile for Lebedev scheme test
+        #Temporary for testing
+
+    Makefie_pre
+        makefile for media parameterization
+        #Temporary for testing
+
+    README
+       this file
+
+3 Usage
+
+  1) Compile: ./make
+
+  2) change the ./DATA/Par_file, add ./DATA/STATIONS if needed, add interface and
+        material file if needed;
+
+  3) run: run_lebedev.sh
+        # Temporary for Lebedev test
+
+  4) cd OUTPUT/ file for your results
