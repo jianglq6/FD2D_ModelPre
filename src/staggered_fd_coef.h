@@ -2,5 +2,5 @@
 #include <stdlib.h>
 #include <math.h>
 
-float coef(int o, int n);
-float *DirectLU(float *u, int n);
+double coef(int o, int n);
+double *DirectLU(double *u, int n);

@@ -6,9 +6,9 @@
 #define KAISERB 4.14
 #define NSRCEXT 4      /* Kaiser window */
 
-#define IMPULSE_DIRECT   0
-#define IMPULSE_AVERAGE  1
-#define IMPULSE_SINC     2
+#define IMPULSE_DIRECT   1
+#define IMPULSE_AVERAGE  2
+#define IMPULSE_SINC     3
 
 
 struct Src

@@ -18,9 +18,9 @@
 #include "elastic2d_math.h"
 #include "staggered_fd_coef.h"
 
-float coef(int o, int n)
+double coef(int o, int n)
 {
-    float B[o], A[o][o+1], *C;
+    double B[o], A[o][o+1], *C;
     int i,j;
     B[0] = 1.0;
     for (i = 1; i < o; i++) {
@@ -34,7 +34,7 @@ float coef(int o, int n)
         A[i][o] = B[i];
     }
 
-    C = DirectLU( (float *)A, o);
+    C = DirectLU( (double *)A, o);
 
    //for(i = 0; i < o; i++)
    //    printf("%f  \n", C[i]);
@@ -44,11 +44,11 @@ float coef(int o, int n)
 
 }
 
-float *DirectLU(float *u, int n)
+double *DirectLU(double *u, int n)
 {
     int i, r, k;
-    float *x;
-    x = (float*) malloc(sizeof(float)*n);
+    double *x;
+    x = (double*) malloc(sizeof(double)*n);
     for (r = 0; r <= n-1; r++) {
         for (i = r; i <= n; i++)
             for (k = 0; k <= r-1; k++)
@@ -68,4 +68,5 @@ float *DirectLU(float *u, int n)
     }
 
     return x;
+    free(x);
 }

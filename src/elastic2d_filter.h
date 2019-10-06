@@ -21,20 +21,28 @@ int filter_stresses(int filter_method, int half_fd_stencil, int nx,
 /* Calculate the filter coefficient, easy to change other filter */
 int filter_coe(int filter_method, int half_fd_stencil, float *f_Coe, int *half_sf_stencil);
 
-/* 2D selective filtering for (i, j) points */
-int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
+/* 1D selective filtering for (i, j) points */
+int sf00_45(int half_sf_stencil, float *sf, float *u00, float *u11,
+         int nx, int ni1, int ni2, int nk1, int nk2);
+int sf00_135(int half_sf_stencil, float *sf, float *u00, float *u11,
          int nx, int ni1, int ni2, int nk1, int nk2);
 
 /* 2D selective filtering for (i+1/2, j+1/2) points */
-int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
+int sf11_45(int half_sf_stencil, float *sf, float *u00, float *u11,
+         int nx, int ni1, int ni2, int nk1, int nk2);
+int sf11_135(int half_sf_stencil, float *sf, float *u00, float *u11,
          int nx, int ni1, int ni2, int nk1, int nk2);
 
 /* 2D selective filtering for (i+1/2, j) points */
-int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
+int sf01_45(int half_sf_stencil, float *sf, float *u01, float *u10,
+         int nx, int ni1, int ni2, int nk1, int nk2);
+int sf01_135(int half_sf_stencil, float *sf, float *u01, float *u10,
          int nx, int ni1, int ni2, int nk1, int nk2);
 
 /* 2D selective filtering for (i, j+1/2) points */
-int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
+int sf10_45(int half_sf_stencil, float *sf, float *u01, float *u10,
+         int nx, int ni1, int ni2, int nk1, int nk2);
+int sf10_135(int half_sf_stencil, float *sf, float *u01, float *u10,
          int nx, int ni1, int ni2, int nk1, int nk2);
 
 int SFsCoe(int half_fd_stencil, float *SFs, int *half_sf_stencil);

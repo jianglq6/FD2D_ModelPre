@@ -25,12 +25,16 @@ int filter_velocity(int filter_method, int half_fd_stencil, int nx,
     filter_coe(filter_method, half_fd_stencil, f_Coe, &half_filter_stencil);
 
     /* Vx */
-    sf01(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
-    sf10(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    sf01_45(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    sf10_45(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    sf01_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    sf10_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
 
     /* Vz */
-    sf10(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
-    sf01(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    sf10_45(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    sf01_45(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    sf10_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    sf01_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
 
     free(f_Coe);
     return 0;
@@ -49,24 +53,30 @@ int filter_stresses(int filter_method, int half_fd_stencil, int nx,
     filter_coe(filter_method, half_fd_stencil, f_Coe, &half_filter_stencil);
 
     /* Txx */
-    sf00(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
-    sf11(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+    sf00_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+    sf11_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+    sf00_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+    sf11_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
 
     /* Tzz */
-    sf00(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
-    sf11(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+    sf00_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+    sf11_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+    sf00_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+    sf11_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
 
     /* Txz */
-    sf00(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
-    sf11(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+    sf00_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+    sf11_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+    sf00_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+    sf11_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
 
     free(f_Coe);
     return 0;
 }
 
 
-/* 2D selective filtering for (i, j) points */
-int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
+/* 1D selective filtering for (i, j) points */
+int sf00_45(int half_sf_stencil, float *sf, float *u00, float *u11,
         int nx, int ni1, int ni2, int nk1, int nk2)
 {
     int ix, iz, ip, index;
@@ -86,12 +96,20 @@ int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
                     Du += sf[ip+1] * ( u00[ (iz+(index))*nx + ix+(index) ]
                                      + u00[ (iz-(index))*nx + ix-(index) ] );
                 }
-
             }
 
             u00[iz*nx + ix] -= SIGMAD * Du;
         }
     }
+    return 0;
+}
+
+/* 2D selective filtering for (i, j) points */
+int sf00_135(int half_sf_stencil, float *sf, float *u00, float *u11,
+        int nx, int ni1, int ni2, int nk1, int nk2)
+{
+    int ix, iz, ip, index;
+    float Du;
 
     for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
         for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
@@ -117,8 +135,9 @@ int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
     return 0;
 }
 
-/* 2D selective filtering for (i+1/2, j+1/2) points */
-int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
+
+/* 1D selective filtering for (i+1/2, j+1/2) points */
+int sf11_45(int half_sf_stencil, float *sf, float *u00, float *u11,
          int nx, int ni1, int ni2, int nk1, int nk2)
 {
     int ix, iz, ip, index;
@@ -143,6 +162,16 @@ int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
         }
     }
 
+    return 0;
+}
+
+/* 1D selective filtering for (i+1/2, j+1/2) points */
+int sf11_135(int half_sf_stencil, float *sf, float *u00, float *u11,
+         int nx, int ni1, int ni2, int nk1, int nk2)
+{
+    int ix, iz, ip, index;
+    float Du;
+
     for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
         for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
 
@@ -166,8 +195,39 @@ int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
     return 0;
 }
 
-/* 2D selective filtering for (i+1/2, j) points */
-int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
+/* 1D selective filtering for (i+1/2, j) points */
+int sf01_45(int half_sf_stencil, float *sf, float *u01, float *u10,
+         int nx, int ni1, int ni2, int nk1, int nk2)
+{
+    int ix, iz, ip, index;
+    float Du;
+
+    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
+        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
+
+            Du = sf[0] * u01[iz*nx+ix];
+            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
+            {
+                index = (ip+1)/2;
+                /*-- 45 deg --*/
+                Du += sf[ip] * ( u10[ ( iz+(index-1) )*nx + ix+(index  ) ]
+                               + u10[ ( iz-(index  ) )*nx + ix-(index-1) ] );
+                if (ip < half_sf_stencil) {
+                    Du += sf[ip+1] * ( u01[ (iz+(index))*nx + ix+(index) ]
+                                     + u01[ (iz-(index))*nx + ix-(index) ] );
+                }
+
+            }
+
+            u01[iz*nx + ix] -= SIGMAD * Du;
+        }
+    }
+
+    return 0;
+}
+
+/* 1D selective filtering for (i+1/2, j) points */
+int sf01_135(int half_sf_stencil, float *sf, float *u01, float *u10,
          int nx, int ni1, int ni2, int nk1, int nk2)
 {
     int ix, iz, ip, index;
@@ -182,33 +242,10 @@ int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
             for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
             {
                 index = (ip+1)/2;
-                /*-- 45 deg --*/
-                Du += sf[ip] * ( u10[ ( iz+(index  ) )*nx + ix+(index-1) ]
-                               + u10[ ( iz-(index-1) )*nx + ix-(index  ) ] );
-                if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u01[ (iz+(index))*nx + ix+(index) ]
-                                     + u01[ (iz-(index))*nx + ix-(index) ] );
-                }
-
-            }
-
-            u01[iz*nx + ix] -= SIGMAD * Du;
-        }
-    }
-
-    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
-        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
-
-            //printf("%d %d %f", ix, iz, sf[0]);
-
-            Du = sf[0] * u01[iz*nx+ix];
-            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
-            {
-                index = (ip+1)/2;
 
                 /*-- 135 deg --*/
-                Du += sf[ip] * ( u10[ (iz-(index-1))*nx + ix+(index-1) ]
-                               + u10[ (iz+(index  ))*nx + ix-(index  ) ]);
+                Du += sf[ip] * ( u10[ (iz-(index  ))*nx + ix+(index  ) ]
+                               + u10[ (iz+(index-1))*nx + ix-(index-1) ]);
                 if (ip < half_sf_stencil) {
                     Du += sf[ip+1] * ( u01[ (iz+(index))*nx + ix-(index) ]
                                      + u01[ (iz-(index))*nx + ix+(index) ] );
@@ -222,8 +259,9 @@ int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
     return 0;
 }
 
-/* 2D selective filtering for (i, j+1/2) points */
-int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
+
+/* 1D selective filtering for (i, j+1/2) points */
+int sf10_45(int half_sf_stencil, float *sf, float *u01, float *u10,
          int nx, int ni1, int ni2, int nk1, int nk2)
 {
     int ix, iz, ip, index;
@@ -237,8 +275,8 @@ int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
             {
                 index = (ip+1)/2;
                 /*-- 45 deg --*/
-                Du += sf[ip] * ( u01[ ( iz+(index-1) )*nx + ix+(index  ) ]
-                               + u01[ ( iz-(index  ) )*nx + ix-(index-1) ] );
+                Du += sf[ip] * ( u01[ ( iz+(index  ) )*nx + ix+(index-1) ]
+                               + u01[ ( iz-(index-1) )*nx + ix-(index  ) ] );
                 if (ip < half_sf_stencil) {
                     Du += sf[ip+1] * ( u10[ (iz+(index))*nx + ix+(index) ]
                                      + u10[ (iz-(index))*nx + ix-(index) ] );
@@ -248,6 +286,15 @@ int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
             u10[iz*nx + ix] -= SIGMAD * Du;
         }
     }
+    return 0;
+}
+
+/* 1D selective filtering for (i, j+1/2) points */
+int sf10_135(int half_sf_stencil, float *sf, float *u01, float *u10,
+         int nx, int ni1, int ni2, int nk1, int nk2)
+{
+    int ix, iz, ip, index;
+    float Du;
 
     for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
         for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
@@ -258,8 +305,8 @@ int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
                 index = (ip+1)/2;
 
                 /*-- 135 deg --*/
-                Du += sf[ip] * ( u01[ (iz-(index  ))*nx + ix+(index  ) ]
-                               + u01[ (iz+(index-1))*nx + ix-(index-1) ]);
+                Du += sf[ip] * ( u01[ (iz-(index-1))*nx + ix+(index-1) ]
+                               + u01[ (iz+(index  ))*nx + ix-(index  ) ]);
                 if (ip < half_sf_stencil) {
                     Du += sf[ip+1] * ( u10[ (iz+(index))*nx + ix-(index) ]
                                      + u10[ (iz-(index))*nx + ix+(index) ] );
@@ -374,3 +421,156 @@ int SFoCoe(int half_fd_stencil, float *SFo, int *half_sf_stencil)
     return 0;
 
 }
+
+
+///* 2D selective filtering for (i, j) points */
+//int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
+//        int nx, int ni1, int ni2, int nk1, int nk2)
+//{
+//    int ix, iz, ip, index;
+//    float Du;
+//
+//    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
+//        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
+//
+//            Du = sf[0] * u00[iz*nx+ix];
+//            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
+//            {
+//                index = (ip+1)/2;
+//                /*-- 45 deg --*/
+//                Du += sf[ip] * ( u11[ ( iz+(index-1) )*nx + ix+(index-1) ]
+//                               + u11[ ( iz-(index  ) )*nx + ix-(index  ) ] );
+//                if (ip < half_sf_stencil) {
+//                    Du += sf[ip+1] * ( u00[ (iz+(index))*nx + ix+(index) ]
+//                                     + u00[ (iz-(index))*nx + ix-(index) ] );
+//                }
+//                /*-- 135 deg --*/
+//                Du += sf[ip] * ( u11[ (iz-(index  ))*nx + ix+(index-1) ]
+//                               + u11[ (iz+(index-1))*nx + ix-(index  ) ]);
+//                if (ip < half_sf_stencil) {
+//                    Du += sf[ip+1] * ( u00[ (iz+(index))*nx + ix-(index) ]
+//                                     + u00[ (iz-(index))*nx + ix+(index) ] );
+//                }
+//
+//            }
+//
+//            u00[iz*nx + ix] -= SIGMAD * Du;
+//        }
+//    }
+//    return 0;
+//}
+//
+///* 2D selective filtering for (i+1/2, j+1/2) points */
+//int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
+//         int nx, int ni1, int ni2, int nk1, int nk2)
+//{
+//    int ix, iz, ip, index;
+//    float Du;
+//
+//    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
+//        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
+//
+//            Du = sf[0] * u11[iz*nx+ix];
+//            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
+//            {
+//                index = (ip+1)/2;
+//                /*-- 45 deg --*/
+//                Du = Du + sf[ip] * ( u00[ ( iz+(index  ) )*nx + ix+(index  ) ]
+//                                   + u00[ ( iz-(index-1) )*nx + ix-(index-1) ] );
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u11[ (iz+(index))*nx + ix+(index) ]
+//                                         + u11[ (iz-(index))*nx + ix-(index) ] );
+//                }
+//
+//                /*-- 135 deg --*/
+//                Du = Du + sf[ip] * ( u00[ (iz-(index-1))*nx + ix+(index  ) ]
+//                                   + u00[ (iz+(index  ))*nx + ix-(index-1) ]);
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u11[ (iz+(index))*nx + ix-(index) ]
+//                                         + u11[ (iz-(index))*nx + ix+(index) ] );
+//                }
+//
+//            }
+//
+//            u11[iz*nx + ix] = u11[iz*nx + ix] - SIGMAD * Du;
+//        }
+//    }
+//    return 0;
+//}
+//
+///* 2D selective filtering for (i+1/2, j) points */
+//int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
+//         int nx, int ni1, int ni2, int nk1, int nk2)
+//{
+//    int ix, iz, ip, index;
+//    float Du;
+//
+//    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
+//        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
+//
+//            //printf("%d %d %f", ix, iz, sf[0]);
+//
+//            Du = sf[0] * u01[iz*nx+ix];
+//            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
+//            {
+//                index = (ip+1)/2;
+//                /*-- 45 deg --*/
+//                Du = Du + sf[ip] * ( u10[ ( iz+(index-1) )*nx + ix+(index  ) ]
+//                                   + u10[ ( iz-(index  ) )*nx + ix-(index-1) ] );
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u01[ (iz+(index))*nx + ix+(index) ]
+//                                         + u01[ (iz-(index))*nx + ix-(index) ] );
+//                }
+//
+//                /*-- 135 deg --*/
+//                Du = Du + sf[ip] * ( u10[ (iz-(index  ))*nx + ix+(index  ) ]
+//                                   + u10[ (iz+(index-1))*nx + ix-(index-1) ]);
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u01[ (iz+(index))*nx + ix-(index) ]
+//                                         + u01[ (iz-(index))*nx + ix+(index) ] );
+//                }
+//
+//            }
+//
+//            u01[iz*nx + ix] = u01[iz*nx + ix] - SIGMAD * Du;
+//        }
+//    }
+//    return 0;
+//}
+//
+///* 2D selective filtering for (i, j+1/2) points */
+//int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
+//         int nx, int ni1, int ni2, int nk1, int nk2)
+//{
+//    int ix, iz, ip, index;
+//    float Du;
+//
+//    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
+//        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
+//
+//            Du = sf[0] * u10[iz*nx + ix];
+//            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
+//            {
+//                index = (ip+1)/2;
+//                /*-- 45 deg --*/
+//                Du = Du + sf[ip] * ( u01[ ( iz+(index  ) )*nx + ix+(index-1) ]
+//                                   + u01[ ( iz-(index-1) )*nx + ix-(index  ) ] );
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u10[ (iz+(index))*nx + ix+(index) ]
+//                                         + u10[ (iz-(index))*nx + ix-(index) ] );
+//                }
+//
+//                /*-- 135 deg --*/
+//                Du = Du + sf[ip] * ( u01[ (iz-(index-1))*nx + ix+(index-1) ]
+//                                   + u01[ (iz+(index  ))*nx + ix-(index  ) ]);
+//                if (ip < half_sf_stencil) {
+//                    Du = Du + sf[ip+1] * ( u10[ (iz+(index))*nx + ix-(index) ]
+//                                         + u10[ (iz-(index))*nx + ix+(index) ] );
+//                }
+//
+//            }
+//            u10[iz*nx + ix] = u10[iz*nx + ix] - SIGMAD * Du;
+//        }
+//    }
+//    return 0;
+//}
