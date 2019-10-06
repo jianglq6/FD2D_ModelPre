@@ -10,12 +10,36 @@
  * History: 08/2019: Original version created by Luqian Jiang
  *
  ***************************************************************************/
+#include "elastic2d_stf.h"
+#include "elastic2d_math.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
+int prepare_source_time_function(int nt, float dt, float t0, float fc, int stf_type_id, int is)
+{
+    int it;
+    float t, stf;
+    FILE *fp;
+    if ((fp=fopen(STF_FILE, "w")) == NULL) {
+        printf("%s cannot be opened\n",STF_FILE );
+    }
 
+    fprintf(stdout, "\nPrepare source time function...\n\n");
+    if (is == 1) {
+        for (it = 0; it < nt; it++) {
+            t = it*dt;
+            if (stf_type_id == SIG_STF_RICKER)
+                stf = fun_ricker(t, fc, t0);
+            else if(stf_type_id == SIG_STF_GAUSS_DERIV)
+                stf = fun_gauss_deriv(t, fc, t0);
+            else if(stf_type_id == SIG_STF_GAUSS)
+                stf = fun_gauss(t, fc, t0);
+
+            fprintf(fp, "%12.6f %20.6f\n", t, stf);
+        }
+    }
+
+    fclose(fp);
+    return 0;
+}
 
 // gauss and it deriv.
 float fun_gauss(float t, float a, float t0)

@@ -141,6 +141,7 @@ int abs_exp_x1(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_s
 {
     int indx, ix, iz;
     int bni1, bni2, bnk1, bnk2;
+    float damp;
 
     bni1 = ni1;
     bni2 = ni1 - 1 + boundary_layer_number;
@@ -162,6 +163,8 @@ int abs_exp_x2(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_s
 {
     int indx, ix, iz;
     int bni1, bni2, bnk1, bnk2;
+    float damp;
+
 
     bni1 = ni2 - boundary_layer_number + 1;
     bni2 = ni2;
@@ -183,6 +186,7 @@ int abs_exp_z1(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_s
 {
     int indx, ix, iz;
     int bni1, bni2, bnk1, bnk2;
+    float damp;
 
     bni1 = ni1;
     bni2 = ni2;
@@ -204,6 +208,7 @@ int abs_exp_z2(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_s
 {
     int indx, ix, iz;
     int bni1, bni2, bnk1, bnk2;
+    float damp;
 
     bni1 = ni1;
     bni2 = ni2;

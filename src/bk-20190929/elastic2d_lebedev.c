@@ -22,7 +22,7 @@
 //#include "write_seismograms.h"
 
 int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
-                    int half_fd_stencil, int spatial_difference_method, int filter_method,
+                    int half_fd_stencil, int spatial_difference_method,
                     float *xvec1, float *zvec1, float *xvec2, float *zvec2,
                     float *c11_1, float *c13_1, float *c15_1, float *c33_1, float *c35_1, float *c55_1,
                     float *c11_2, float *c13_2, float *c15_2, float *c33_2, float *c35_2, float *c55_2,
@@ -44,7 +44,7 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                     bool use_binary_for_wavefield_dumps)
 {
     int ni1, ni2, nk1, nk2, it, i, ierr, is;
-    double *fdx = NULL, *fdz = NULL;
+    float *fdx = NULL, *fdz = NULL;
     float current_time;
 
     ni1 = half_fd_stencil;
@@ -59,16 +59,21 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
     /*---------------------------------------------------------*/
     /* staggered grid differential coefficient                 */
     /*---------------------------------------------------------*/
-    fdx = (double*) malloc(half_fd_stencil*sizeof(double));
-    fdz = (double*) malloc(half_fd_stencil*sizeof(double));
+    fdx = (float*) malloc(half_fd_stencil*sizeof(float));
+    fdz = (float*) malloc(half_fd_stencil*sizeof(float));
 
-    switch(spatial_difference_method) {
+    switch (spatial_difference_method) {
         case 1:
-            for (i = 0; i < half_fd_stencil; i++) {
-                fdx[i] = coef(half_fd_stencil,i)/dx;
-                fdz[i] = coef(half_fd_stencil,i)/dz;
-            }
+            //for (i = 1; i <= half_fd_stencil; i++) {
+            //    fdx[i] = coef(half_fd_stencil,i)/dx;
+            //    fdz[i] = coef(half_fd_stencil,i)/dz;
+            //
+            fdx[0] = 9/8/dx;
+            fdx[1] = -1/24/dx;
+            fdx[0] = 9/8/dz;
+            fdz[1] = -1/24/dz;
             break;
+
     }
     /* prepare stf */
     //printf("dt: %f\n",dt );
@@ -76,6 +81,8 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
     //    ierr = prepare_source_time_function(nt, dt, src.stf_timefactor[is],
     //            src.stf_freqfactor[is], src.stf_type_id[is], is+1);
     //}
+
+
 
     /* TODO! check stability */
 
@@ -90,7 +97,7 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
         current_time = dt*it;
 
         if ((it+1)%NSTEP_BETWEEN_OUTPUT_INFO == 0)
-            fprintf(stdout, "\n  it = %d, current time = %f \n", it+1, current_time);
+            fprintf(stdout, "\n it = %d, current time = %f \n ", it+1, current_time);
 
         /*------------------------------------------------------*/
         /* update velocity (equation of the motion)             */
@@ -105,13 +112,13 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                             hVx_2, hVz_2, Txx_2, Txz_2, Tzz_2);
 
         /* Force source */
-        ierr =  src_tti_force(hVx_1, hVz_1, hVx_2, hVz_2,
-                              xvec1, zvec1,  /* for the integer grids  */
-                              xvec2, zvec2,  /* for the half grids     */
-                              source_impulse_method, src,
-                              current_time, dt,
-                              dx, dz, nx,
-                              B01, B10);
+        //ierr =  src_tti_force(hVx_1, hVz_1, hVx_2, hVz_2,
+        //                      xvec1, zvec1,  /* for the integer grids  */
+        //                      xvec2, zvec2,  /* for the half grids     */
+        //                      source_impulse_method, src,
+        //                      current_time, dt,
+        //                      dx, dz, nx,
+        //                      B01, B10);
 
         /* Absorbing boundary condition */
         //ierr = abs_exp_velocity(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -123,11 +130,8 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                             hVx_1, hVz_1, hVx_2, hVz_2, B10, B01);
 
         /* Filtering velocity */
-        if (filter_method != NOFILTER) {
-            ierr = filter_velocity(filter_method, half_fd_stencil, nx,
-                                ni1, ni2, nk1, nk2,
-                                Vx_1, Vx_2, Vz_1, Vz_2);
-        }
+        //ierr = filter_velocity(half_fd_stencil, nx, nz,
+        //                    Vx_1, Vx_2, Vz_1, Vz_2);
 
         /*------------------------------------------------------*/
         /* update stress (Hoke law)                             */
@@ -160,12 +164,9 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
         //                Txx_1, Txx_2, Tzz_1, Tzz_2, Txz_1, Txz_2);
 
         /* Filtering stresses */
-        if (filter_method != NOFILTER) {
-            ierr = filter_stresses(filter_method, half_fd_stencil, nx,
-                            ni1, ni2, nk1, nk2,
-                            Txx_1, Tzz_1, Txz_1,
-                            Txx_2, Tzz_2, Txz_2);
-        }
+        //ierr = filter_stresses(half_fd_stencil, nx, nz,
+        //                Txx_1, Tzz_1, Txz_1,
+        //                Txx_2, Tzz_2, Txz_2);
 
         /* receiver and snapshot */
         /*ierr = write_seismograms(config_file,
@@ -208,7 +209,7 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
 }
 
 /* RHS of equation of motion */
-int cal_momentum(double *fdx, double *fdz, int half_fd_stencil,
+int cal_momentum(float *fdx, float *fdz, int half_fd_stencil,
                  int ni1, int ni2, int nk1, int nk2, int nx,
                  float *hVx_1, float *hVz_1, float *Txx_1, float *Txz_1, float *Tzz_1,
                  float *hVx_2, float *hVz_2, float *Txx_2, float *Txz_2, float *Tzz_2)
@@ -252,7 +253,7 @@ int cal_momentum(double *fdx, double *fdz, int half_fd_stencil,
 
 
 /* RHS of stress-strain equation (Hook law) */
-int cal_hook(double *fdx, double *fdz, int half_fd_stencil, int ni1, int ni2, int nk1, int nk2, int nx,
+int cal_hook(float *fdx, float *fdz, int half_fd_stencil, int ni1, int ni2, int nk1, int nk2, int nx,
              float *hTxx_1, float *hTzz_1, float *hTxz_1, float *Vx_1 , float *Vz_1,
              float *hTxx_2, float *hTzz_2, float *hTxz_2, float *Vx_2 , float *Vz_2,
              float *c11_1 , float *c13_1 , float *c15_1 , float *c33_1, float *c35_1, float *c55_1,
@@ -358,61 +359,60 @@ int update_stress(int nx, int nz, float dt,
     return 0;
 }
 
-//float Dx00( float *a, double *fdx, int ith, int indx, int nx)
-//{
-//
-//    float dx00;
-//    dx00 = fdx[ith-1] * ( a[indx+ith-1] - a[indx-ith ] );
-//    return dx00;
-//}
-//
-//float Dx10( float *a, double *fdx, int ith, int indx, int nx)
-//{
-//    float dx10;
-//    dx10 = fdx[ith-1] * ( a[indx+ith-1] - a[indx-ith] );
-//    return dx10;
-//}
-//
-//float Dx01( float *a, double *fdx, int ith, int indx, int nx)
-//{
-//    float dx01;
-//    dx01 = fdx[ith-1] * ( a[indx+ith] - a[indx-ith+1] );
-//    return dx01;
-//}
-//
-//float Dx11( float *a, double *fdx, int ith, int indx, int nx)
-//{
-//    float dx11;
-//    dx11 = fdx[ith-1] * ( a[indx+ith] - a[indx-ith+1] );
-//    return dx11;
-//}
-//
-//float Dz00( float *a, double *fdz, int ith, int indx, int nx)
-//{
-//    float dz00;
-//    dz00 = fdz[ith-1] * ( a[indx+(ith-1)*nx] - a[indx-ith*nx] );
-//    return dz00;
-//}
-//
-//float Dz01( float *a, double *fdz, int ith, int indx, int nx)
-//{
-//    float dz01;
-//    dz01 = fdz[ith-1] * ( a[indx+(ith-1)*nx] - a[indx-ith*nx] );
-//    return dz01;
-//}
-//
-//float Dz10( float *a, double *fdz, int ith, int indx, int nx)
-//{
-//    float dz10;
-//    dz10 = fdz[ith-1] * ( a[indx+ith*nx] - a[indx-(ith-1)*nx] );
-//    return dz10;
-//}
-//
-//float Dz11( float *a, double *fdz, int ith, int indx, int nx)
-//{
-//    float dz11;
-//    dz11 = fdz[ith-1] * ( a[indx+ith*nx] - a[indx-(ith-1)*nx] );
-//    return dz11;
-//}
-//
-//
+float Dx00( float *a, float *fdx, int ith, int ix, int iz, int nx)
+{
+
+    float dx00;
+    dx00 = fdx[ith-1] * ( a[iz*nx + ix+(ith-1)] - a[iz*nx + ix-(ith  ) ] );
+    return dx00;
+}
+
+float Dx10( float *a, float *fdx, int ith, int ix, int iz, int nx)
+{
+    float dx10;
+    dx10 = fdx[ith-1] * ( a[iz*nx + ix+(ith-1)] - a[iz*nx + ix-(ith  ) ] );
+    return dx10;
+}
+
+float Dx01( float *a, float *fdx, int ith, int ix, int iz, int nx)
+{
+    float dx01;
+    dx01 = fdx[ith-1] * ( a[iz*nx + ix+(ith)] - a[iz*nx + ix-(ith-1) ] );
+    return dx01;
+}
+
+float Dx11( float *a, float *fdx, int ith, int ix, int iz, int nx)
+{
+    float dx11;
+    dx11 = fdx[ith-1] * ( a[iz*nx + ix+(ith)] - a[iz*nx + ix-(ith-1) ] );
+    return dx11;
+}
+
+float Dz00( float *a, float *fdz, int ith, int ix, int iz, int nx)
+{
+    float dz00;
+    dz00 = fdz[ith-1] * ( a[(iz+(ith-1)) * nx + ix] - a[(iz-ith) * nx + ix ] );
+    return dz00;
+}
+
+float Dz01( float *a, float *fdz, int ith, int ix, int iz, int nx)
+{
+    float dz01;
+    dz01 = fdz[ith-1] * ( a[(iz+(ith-1)) * nx + ix] - a[(iz-ith) * nx + ix ] );
+    return dz01;
+}
+
+float Dz10( float *a, float *fdz, int ith, int ix, int iz, int nx)
+{
+    float dz10;
+    dz10 = fdz[ith-1] * ( a[(iz+ith) * nx + ix] - a[(iz-(ith-1)) * nx + ix] );
+    return dz10;
+}
+
+float Dz11( float *a, float *fdz, int ith, int ix, int iz, int nx)
+{
+    float dz11;
+    dz11 = fdz[ith-1] * ( a[(iz+ith) * nx + ix] - a[(iz-(ith-1)) * nx + ix] );
+    return dz11;
+}
+

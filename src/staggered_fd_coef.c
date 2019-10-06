@@ -14,12 +14,9 @@
  * History: 08/2019: Original version created by Luqian Jiang
  *
  ***************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
-float coef(int o, int n);
-float *DirectLU(float *u, int n);
+#include "elastic2d_math.h"
+#include "staggered_fd_coef.h"
 
 float coef(int o, int n)
 {
@@ -39,8 +36,9 @@ float coef(int o, int n)
 
     C = DirectLU( (float *)A, o);
 
-    for(i = 0; i < o; i++)
-        printf("%f  \n", C[i]);
+   //for(i = 0; i < o; i++)
+   //    printf("%f  \n", C[i]);
+   //printf("\n");
 
     return C[n];
 

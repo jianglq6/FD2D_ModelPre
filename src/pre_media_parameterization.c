@@ -30,7 +30,7 @@
  *
  ************************************************************************/
 
-#include "pre_global_used.h"
+#include "pre_interface_struct.h"
 #include "pre_cal_dip_area.h"
 #include "pre_media_parameterization.h"
 #include "pre_para_assign.h"

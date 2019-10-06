@@ -18,7 +18,7 @@
  ************************************************************************/
 
 #include "pre_read_conf.h"
-#include "pre_interface_struct.h"
+#include "pre_global_used.h"
 
 /* gfopen: elegant version of fopen() */
 FILE *gfopen(char *filename, char *mode)

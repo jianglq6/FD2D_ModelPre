@@ -86,21 +86,6 @@ int sf00(int half_sf_stencil, float *sf, float *u00, float *u11,
                     Du += sf[ip+1] * ( u00[ (iz+(index))*nx + ix+(index) ]
                                      + u00[ (iz-(index))*nx + ix-(index) ] );
                 }
-
-            }
-
-            u00[iz*nx + ix] -= SIGMAD * Du;
-        }
-    }
-
-    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
-        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
-
-            Du = sf[0] * u00[iz*nx+ix];
-            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
-            {
-                index = (ip+1)/2;
-
                 /*-- 135 deg --*/
                 Du += sf[ip] * ( u11[ (iz-(index  ))*nx + ix+(index-1) ]
                                + u11[ (iz+(index-1))*nx + ix-(index  ) ]);
@@ -132,35 +117,24 @@ int sf11(int half_sf_stencil, float *sf, float *u00, float *u11,
             {
                 index = (ip+1)/2;
                 /*-- 45 deg --*/
-                Du += sf[ip] * ( u00[ ( iz+(index  ) )*nx + ix+(index  ) ]
-                               + u00[ ( iz-(index-1) )*nx + ix-(index-1) ] );
+                Du = Du + sf[ip] * ( u00[ ( iz+(index  ) )*nx + ix+(index  ) ]
+                                   + u00[ ( iz-(index-1) )*nx + ix-(index-1) ] );
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u11[ (iz+(index))*nx + ix+(index) ]
-                                     + u11[ (iz-(index))*nx + ix-(index) ] );
+                    Du = Du + sf[ip+1] * ( u11[ (iz+(index))*nx + ix+(index) ]
+                                         + u11[ (iz-(index))*nx + ix-(index) ] );
                 }
-            }
-            u11[iz*nx + ix] -= SIGMAD * Du;
-        }
-    }
-
-    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
-        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
-
-            Du = sf[0] * u11[iz*nx+ix];
-            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
-            {
-                index = (ip+1)/2;
 
                 /*-- 135 deg --*/
-                Du += sf[ip] * ( u00[ (iz-(index-1))*nx + ix+(index  ) ]
-                               + u00[ (iz+(index  ))*nx + ix-(index-1) ]);
+                Du = Du + sf[ip] * ( u00[ (iz-(index-1))*nx + ix+(index  ) ]
+                                   + u00[ (iz+(index  ))*nx + ix-(index-1) ]);
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u11[ (iz+(index))*nx + ix-(index) ]
-                                     + u11[ (iz-(index))*nx + ix+(index) ] );
+                    Du = Du + sf[ip+1] * ( u11[ (iz+(index))*nx + ix-(index) ]
+                                         + u11[ (iz-(index))*nx + ix+(index) ] );
                 }
+
             }
 
-            u11[iz*nx + ix] -= SIGMAD * Du;
+            u11[iz*nx + ix] = u11[iz*nx + ix] - SIGMAD * Du;
         }
     }
     return 0;
@@ -183,40 +157,24 @@ int sf01(int half_sf_stencil, float *sf, float *u01, float *u10,
             {
                 index = (ip+1)/2;
                 /*-- 45 deg --*/
-                Du += sf[ip] * ( u10[ ( iz+(index  ) )*nx + ix+(index-1) ]
-                               + u10[ ( iz-(index-1) )*nx + ix-(index  ) ] );
+                Du = Du + sf[ip] * ( u10[ ( iz+(index-1) )*nx + ix+(index  ) ]
+                                   + u10[ ( iz-(index  ) )*nx + ix-(index-1) ] );
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u01[ (iz+(index))*nx + ix+(index) ]
-                                     + u01[ (iz-(index))*nx + ix-(index) ] );
+                    Du = Du + sf[ip+1] * ( u01[ (iz+(index))*nx + ix+(index) ]
+                                         + u01[ (iz-(index))*nx + ix-(index) ] );
                 }
-
-            }
-
-            u01[iz*nx + ix] -= SIGMAD * Du;
-        }
-    }
-
-    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
-        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
-
-            //printf("%d %d %f", ix, iz, sf[0]);
-
-            Du = sf[0] * u01[iz*nx+ix];
-            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
-            {
-                index = (ip+1)/2;
 
                 /*-- 135 deg --*/
-                Du += sf[ip] * ( u10[ (iz-(index-1))*nx + ix+(index-1) ]
-                               + u10[ (iz+(index  ))*nx + ix-(index  ) ]);
+                Du = Du + sf[ip] * ( u10[ (iz-(index  ))*nx + ix+(index  ) ]
+                                   + u10[ (iz+(index-1))*nx + ix-(index-1) ]);
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u01[ (iz+(index))*nx + ix-(index) ]
-                                     + u01[ (iz-(index))*nx + ix+(index) ] );
+                    Du = Du + sf[ip+1] * ( u01[ (iz+(index))*nx + ix-(index) ]
+                                         + u01[ (iz-(index))*nx + ix+(index) ] );
                 }
 
             }
 
-            u01[iz*nx + ix] -= SIGMAD * Du;
+            u01[iz*nx + ix] = u01[iz*nx + ix] - SIGMAD * Du;
         }
     }
     return 0;
@@ -237,36 +195,23 @@ int sf10(int half_sf_stencil, float *sf, float *u01, float *u10,
             {
                 index = (ip+1)/2;
                 /*-- 45 deg --*/
-                Du += sf[ip] * ( u01[ ( iz+(index-1) )*nx + ix+(index  ) ]
-                               + u01[ ( iz-(index  ) )*nx + ix-(index-1) ] );
+                Du = Du + sf[ip] * ( u01[ ( iz+(index  ) )*nx + ix+(index-1) ]
+                                   + u01[ ( iz-(index-1) )*nx + ix-(index  ) ] );
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u10[ (iz+(index))*nx + ix+(index) ]
-                                     + u10[ (iz-(index))*nx + ix-(index) ] );
+                    Du = Du + sf[ip+1] * ( u10[ (iz+(index))*nx + ix+(index) ]
+                                         + u10[ (iz-(index))*nx + ix-(index) ] );
                 }
-
-            }
-            u10[iz*nx + ix] -= SIGMAD * Du;
-        }
-    }
-
-    for (iz = nk1+half_sf_stencil; iz < nk2-half_sf_stencil-1; iz++) {
-        for (ix = ni1+half_sf_stencil; ix < ni2-half_sf_stencil-1; ix++) {
-
-            Du = sf[0] * u10[iz*nx + ix];
-            for (ip = 1; ip <= half_sf_stencil; ip = ip+2)
-            {
-                index = (ip+1)/2;
 
                 /*-- 135 deg --*/
-                Du += sf[ip] * ( u01[ (iz-(index  ))*nx + ix+(index  ) ]
-                               + u01[ (iz+(index-1))*nx + ix-(index-1) ]);
+                Du = Du + sf[ip] * ( u01[ (iz-(index-1))*nx + ix+(index-1) ]
+                                   + u01[ (iz+(index  ))*nx + ix-(index  ) ]);
                 if (ip < half_sf_stencil) {
-                    Du += sf[ip+1] * ( u10[ (iz+(index))*nx + ix-(index) ]
-                                     + u10[ (iz-(index))*nx + ix+(index) ] );
+                    Du = Du + sf[ip+1] * ( u10[ (iz+(index))*nx + ix-(index) ]
+                                         + u10[ (iz-(index))*nx + ix+(index) ] );
                 }
 
             }
-            u10[iz*nx + ix] -= SIGMAD * Du;
+            u10[iz*nx + ix] = u10[iz*nx + ix] - SIGMAD * Du;
         }
     }
     return 0;

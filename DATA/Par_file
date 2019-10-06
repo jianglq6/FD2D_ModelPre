@@ -6,9 +6,9 @@
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 1600
+NSTEP                           = 800
 # time step
-DT                              = 0.0001
+DT                              = 0.001
 
 # available models
 #  default  - define model using nbmodels below
@@ -16,10 +16,21 @@ DT                              = 0.0001
 #  binary   - read model from binary database file
 MODEL                           = default
 
-# output the model withe the requested type, does not save if turn to default or false
+# output the model with the requested type, does not save if turn to default or false
 # (available output formats: ascii, binary)
 SAVE_MODEL                      = default
 
+# half FD stencil, must less than 4
+half_fd_stencil                 = 4
+
+# difference method (1. staggered 2. optimized method)
+spatial_difference_method       = 1
+
+#-----------------------------------------------
+# TODO: filter method: Just for Lebedev test
+#------------------------------------------------
+# 0: no filter, 1: standard selective filter, 2 optimized selective filter
+filter_method                   = 2
 
 #---------------------------------------------------------------------------------
 #
@@ -28,11 +39,11 @@ SAVE_MODEL                      = default
 # --------------------------------------------------------------------------------
 xmin                            = 0.0               # abscissa of left side of the model
 dx                              = 8.0               # space step in the x direction
-nx                              = 751               # number of grids on the x-axis
+nx                              = 601               # number of grids on the x-axis
 
 zmin                            = 0.0               # abscissa of top side of the model
 dz                              = 8.0               # space step in the z direction
-nz                              = 226              # number of grids on the x-axis
+nz                              = 601               # number of grids on the x-axis
 
 
 #---------------------------------------------------------------------------------
@@ -41,11 +52,39 @@ nz                              = 226              # number of grids on the x-ax
 #
 #---------------------------------------------------------------------------------
 
+# source impulse method ( 1. just grid set 1, explosion source, the source location needs to be on the grid point;
+#  2. one set of grids add S, while the weights at the other points should be 1/4;
+#  3. dicrete source mathod Sinc [ref: Hicks, 2002, Arbitrary source and receiver positioning in FD schemes] )
+#TODO  just for test!
+source_impulse_method           = 1
+
 # source parameters
 NSOURCES                        = 1                  # number of sources
 
-# source information file
-SOURCE_FILE                     = ../DATA/SOURCE
+# Source setting (repeat these 10 lines and adjust nreceiversets accordingly)
+
+# source 1
+# source_surf          = fasle     # source inside the medium, or source automatically moved exactly at the surface by the solver
+
+xs                   = 2400.0    # source location x in meters
+zs                   = 2400.0     # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with topography height)
+
+# source type: elastic force or acoustic pressure = 1 or moment tensor = 2
+# source_type          = 1
+
+# source time function: second derivative of a Gaussian (a.k.a. Ricker) = 1, first derivative of a Gaussian = 2, Gaussian = 3, Dirac = 4, Heaviside = 5 (4 and 5 will produce noisy recordings because of frequencies above the mesh resolution limit); time function_type == 8 source read from file
+time_function_type   = 1
+# If time_function_type == 8, enter below the custom source file to read (two columns file with time and amplitude) :
+# (For the moment dt must be equal to the dt of the simulation. File name cannot exceed 150 characters)
+# IMPORTANT: do NOT put quote signs around the file name, just put the file name itself otherwise the run will stop
+# name_of_source_file  = AAA           # Only for option 8 : file containing the source wavelet
+freqfactor           = 10.0            # dominant source frequency (Hz) if not Dirac or Heaviside
+timefactor           = 0.2             # t0
+Fx                   = 0.0             # Fx  component (for a force only)
+Fz                   = 0.0             # Fz  component (for a force only)
+Mxx                  = 1.0e9           # Mxx component (for a moment tensor source only)
+Mzz                  = 1.0e9           # Mzz component (for a moment tensor source only)
+Mxz                  = 0.0             # Mxz component (for a moment tensor source only)
 
 
 #---------------------------------------------------------------------------------
@@ -55,11 +94,16 @@ SOURCE_FILE                     = ../DATA/SOURCE
 #---------------------------------------------------------------------------------
 
 # receiver set parameters
-seismotype                      = 1         # record 1=veloc 2=displ
+seismotype                      = 1          # record 1=veloc 2=stress
+
+# every how many time steps we save the seismograms
+# ( if you use a very large value that is larger than the total number of time steps of the run, the seismograms
+#   will automatically saved once at the end of the run anyway)
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1
 
 # seismograms formats
-save_ASCII_seismograms          = true    # save seismograms in ASCII format or not
-save_binary_seismograms_single  = true    # save seismograms in single precision binary format or not
+save_ASCII_seismograms          = true       # save seismograms in ASCII format or not
+save_binary_seismograms         = false      # save seismograms in single precision binary format or not
 
 # using an existing STATION file file found in ./DATA or create a new one from the receiver positions below in this Par_file
 use_existing_STATIONS           = false
@@ -67,24 +111,20 @@ use_existing_STATIONS           = false
 # number of receiver sets (i.e. number of receiver lines to create below)
 nreceiversets                   = 2
 
-# orientation
-anglerec                        = 0.d0      # angle to rotate components at receivers
-
-# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-nrec                            = 11        # number of receivers
+# first receiver set (repeat these 5 lines and adjust nreceiversets accordingly)
+nrec                            = 11         # number of receivers
 xdeb                            = 300.0      # first receiver x in meters
-zdeb                            = 100.0      # first receiver z in meters
+zdeb                            = 1100.0      # first receiver z in meters
 xfin                            = 3700.0     # last receiver x in meters (ignored if only one receiver)
-zfin                            = 100.0      # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = false   # receivers inside the medium or at the surface ( z value are ignored if this is set to true, they are replaced with the topography height)
+zfin                            = 1100.0      # last receiver z in meters (ignored if only one receiver)
 
 # second receiver set
-nrec                            = 11        # number of receivers
+nrec                            = 11         # number of receivers
 xdeb                            = 300.0      # first receiver x in meters
 zdeb                            = 100.0      # first receiver z in meters
 xfin                            = 3700.0     # last receiver x in meters (ignored if only one receiver)
 zfin                            = 100.0      # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = false   # receivers inside the medium or at the surface ( z value are ignored if this is set to true, they are replaced with the topography height)
+
 
 
 #---------------------------------------------------------------------------------
@@ -92,6 +132,18 @@ record_at_surface_same_vertical = false   # receivers inside the medium or at th
 # boundary conditions
 #
 #---------------------------------------------------------------------------------
+# Boundary condition type: 1. exp, 2. ade-cfs-pml 0. free-surface B.C
+boundary_type_top                = 1
+boundary_layer_number_top        = 10
+
+boundary_type_left               = 1
+boundary_layer_number_left       = 10
+
+boundary_type_right              = 1
+boundary_layer_number_right      = 10
+
+boundary_type_bottom             = 1
+boundary_layer_number_bottom     = 10
 
 
 #---------------------------------------------------------------------------------
@@ -108,10 +160,10 @@ use_existing_model           = false
 nbmodels                       = 7
 
 # velocity and density models parameter file
-materialfile                   = ../DATA/materials6.dat
+materialfile                   = ./DATA/materials6.dat
 
 # interfaces file
-interfacesfile                 = ../DATA/interfaces6.dat
+interfacesfile                 = ./DATA/interfaces6.dat
 
 # model file: (TBD: incomplete!!) Vp, Vs, rho three files
 # model file type: ASCII, binary or some ad hoc file type, such as .mdl, .segy, .rsf (re-mesh according to the geometry and grid setting above)
@@ -120,7 +172,7 @@ model_file                     = ./DATA/
 
 #---------------------------------------------------------------------------------
 #
-# effective media parameterization method
+# effective media parameterization method, Just use when don't use existing models
 #
 #---------------------------------------------------------------------------------
 # 0 - DO NOT use effective method
@@ -151,5 +203,20 @@ NSTEP_BETWEEN_OUTPUT_INFO      = 100
 # and/or we dump results of the simulation as ASCII or binary files
 NSTEP_BETWEEN_OUTPUT_IMAGES    = 100
 
+#### for JPEG color images ####
+
+#### for PostScript snapshots ####
+output_postscript_snapshot     = false      # output Postscript snapshot of the results every; NSTEP_BETWEEN_OUTPUT_IMAGES or not
+imagetype_postscript           = 1         # display 1=displ vector 2=veloc vector 3=accel vector 4=stress
+meshvect                       = true      # display mesh on postscript plots or not
+modelvect                      = true      # display velocity model on postscript plots or not
+boundvect                      = true      # display boundatry conditions on postscript plots or not
+sizemax_arrows                 = 1.0       # maximum size of arrows on postscript plots in centimeters
+US_LETTER                      = false     # use US letter or European A4 paper for PostScript plots
+
+#### for wavefield dumps ####
+output_wavefield_dumps         = true
+imagetype_wavefield_dumps      = 2         # display 1=displ vector 2=veloc vector 3=accel vector 4=stress
+use_binary_for_wavefield_dumps = true     # use ASCII or single-precision binary format for the wave field dumps
 
 # vim:ft=conf:ts=4:sw=4:nu:et:ai:spell:

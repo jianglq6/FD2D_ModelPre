@@ -1,0 +1,75 @@
+#=======================================
+#
+#  For model preparation
+#
+#  2019.09
+#
+#==========================================
+
+#=======================================================
+# Directory
+#=======================================================
+SRCDIR := ./src
+BINDIR := ./bin
+OBJDIR := ./OBJ
+skeldirs := $(OBJDIR) $(BINDIR)
+
+#=======================================================
+# Compiler and Option
+#=======================================================
+CC := gcc
+CFLAGS := -c -g -I $(SRCDIR) #-std=c99
+#CFLAGS := -c
+
+#=======================================================
+# Source File Names
+#=======================================================
+
+SRC := read_config_para.c read_interface_material.c pre_para_assign.c pre_cal_dip_area.c pre_media_parameterization.c FD2D_ModelPrepare.c
+INC := pre_interface_struct.h read_config_para.h read_interface_material.h pre_para_assign.h pre_cal_dip_area.h pre_media_parameterization.h FD2D_ModelPrepare.h
+
+#OBJ := $(SRC:%.c=%.o)
+OBJ := $(foreach file,$(SRC),$(OBJDIR)/$(file:.c=.o))
+
+EXE := prepare
+#=======================================================
+#Searching Path
+#=======================================================
+vpath %.c $(SRCDIR)
+vpath %.h $(SRCDIR)
+
+#=======================================================
+# Target
+#=======================================================
+PHONYLIST = skel all slover
+.PHONY : $(PHINYLIST)
+
+all: skel solver
+
+solver: $(BINDIR)/$(EXE)
+
+skel:
+	@echo $(OBJ)
+	@mkdir -p $(skeldirs)
+
+$(BINDIR)/$(EXE) : $(OBJ)
+	@echo "----- compliling -----"
+	$(CC) -o $@ $(^) -lm
+	@echo "----- DONE -----"
+	@echo
+
+$(OBJDIR)/%.o : %.c
+	$(CC) $(CFLAGS) $< -o $(@) -lm
+
+.PHONY : clean
+
+RM := rm
+clean:
+	$(RM) -r $(BINDIR)/*
+	$(RM) -R $(OBJDIR)/*
+cleanexe:
+	$(RM) -f $(BINDIR)/*
+cleanall: cleanexe clean
+distclean: cleanall
+	$(RM) -r $(BINDIR)/*
+	$(RM) -R $(OBJDIR)/*

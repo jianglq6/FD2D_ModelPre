@@ -1,4 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+#include <ctype.h>
+#include <regex.h>
 
 #define COMMENT_CHAR '#'
 #define MAX_BUF_LEN 1024
@@ -34,4 +40,10 @@ void read_material(int nbmodel, char *materialfile, int *material_type, int *mod
 
 /* Read interfaces data */
 struct interfaces *read_interfaces(char *interfacesfile, int *number_of_interfaces);
+
+void read_value_float_next_p(FILE *fp, char *para_name, float *value_to_read);
+
+void read_value_int_next_p(FILE *fp, char *para_name, int *value_to_read);
+
+void param_read_nextparam(FILE *fid, char *string_read, size_t string_read_len, char *name, size_t name_len, int *ierr);
 

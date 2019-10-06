@@ -1,6 +1,7 @@
 #include <stdbool.h>
-#include "pre_global_used.h"
-#include "pre_read_conf.h"
+#include "pre_interface_struct.h"
+#include "read_config_para.h"
+#include "read_interface_material.h"
 #include "pre_media_parameterization.h"
 
 /* malloc a float array and initialization */
@@ -18,21 +19,18 @@ float *creat_para_array(int n)
 int main(int agrc, char *argv)
 {
 
-    char  config_file[] =  "../DATA/Par_file";
+    char  config_file[] =  "./DATA/Par_file";
 
     /* Grid information */
     float xmin, dx, zmin, dz;
-    char  xmin_key[] = "xmin", nx_key[] = "nx", dx_key[] = "dx", dz_key[] = "dz", zmin_key[] = "zmin", nz_key[] = "nz";
     int   nx, nz, ix, iz;
 
     int   nbmodels, effective_para_method;
-    char  nbmodels_key[] = "nbmodels", effective_para_method_key[] = "effective_para_method";
     bool  use_existing_model;
-    char  use_existing_model_key[] = "use_existing_model";
-    char  interfacesfile[MAX_VAL_LEN], interfacesfile_key[] = "interfacesfile";
-    char  materialfile[MAX_VAL_LEN], materialfile_key[] = "materialfile";
+    char  interfacesfile[MAX_VAL_LEN], materialfile[MAX_VAL_LEN];
 
     float *xvec = NULL, *zvec = NULL;
+    int  ierr = 0;
 
 
     /* interfaces */
@@ -41,16 +39,18 @@ int main(int agrc, char *argv)
 
     float xmax, zmax;
 
+    FILE *fid = gfopen(config_file,"r");
+
     /* Read the parameters I need */
-    read_conf_value_float(config_file, xmin_key, &xmin);
-    read_conf_value_float(config_file, zmin_key, &zmin);
-    read_conf_value_float(config_file, dx_key  , &dx  );
-    read_conf_value_float(config_file, dz_key  , &dz  );
-    read_conf_value_int(config_file, nx_key, &nx);
-    read_conf_value_int(config_file, nz_key, &nz);
-    read_conf_value_int(config_file, nbmodels_key, &nbmodels);
-    read_conf_value_int(config_file, effective_para_method_key, &effective_para_method);
-    read_conf_value_bool(config_file, use_existing_model_key, &use_existing_model);
+    read_value_float(fid, "xmin", &xmin, &ierr);
+    read_value_float(fid, "zmin", &zmin, &ierr);
+    read_value_float(fid, "dx" , &dx, &ierr);
+    read_value_float(fid, "dz" , &dz, &ierr);
+    read_value_int(fid, "nx", &nx, &ierr);
+    read_value_int(fid, "nz", &nz, &ierr);
+    read_value_int(fid, "nbmodels", &nbmodels ,&ierr);
+    read_value_int(fid, "effective_para_method", &effective_para_method, &ierr);
+    read_value_bool(fid, "use_existing_model", &use_existing_model, &ierr);
 
     /******************************************************************
      * Grid Setting
@@ -71,7 +71,7 @@ int main(int agrc, char *argv)
     if (!use_existing_model) {
             /* Material */
         int i = 0, j;
-        int   *model_number, *material_type, *ierr;
+        int   *model_number, *material_type;
 
         float *val1 = NULL, *val2 = NULL, *val3 = NULL, *val4 = NULL, *val6 = NULL, *val7 = NULL, *val5 = NULL;
         float *val8 = NULL, *val9 = NULL, *val10 = NULL, *val11 = NULL, *val12 = NULL, *val13 = NULL;
@@ -85,8 +85,6 @@ int main(int agrc, char *argv)
         float *c11_2 = NULL, *c13_2 = NULL, *c15_2 = NULL, *c33_2 = NULL, *c35_2 = NULL, *c55_2 = NULL;
 
         FILE *fp1, *fp2, *fp3;
-
-        ierr = &i;
 
         /* Read material file */
         model_number  = (int*) malloc( nbmodels * sizeof(int) );
@@ -148,15 +146,18 @@ int main(int agrc, char *argv)
 
 
         /* Initialization */
-        read_conf_value_string(config_file, materialfile_key  , materialfile);
-        read_conf_value_string(config_file, interfacesfile_key, interfacesfile);
+        read_value_string(fid, "materialfile"  , materialfile,   &ierr);
+        read_value_string(fid, "interfacesfile", interfacesfile, &ierr);
+
+    fclose(fid);
 
         read_material(nbmodels, materialfile, material_type, model_number,
                 val1, val2, val3, val4, val5, val6, val7, val8, val9,
-                val10, val11, val12, val13, ierr);
+                val10, val11, val12, val13, &ierr);
 
         /* Read interfaces file */
         interface = read_interfaces(interfacesfile, &number_of_interfaces);
+
 
 
         // Need to be modefied!
@@ -206,14 +207,14 @@ int main(int agrc, char *argv)
                     LAM, MU, RHO, L2M,
                     lam, mu, muxz, rho_x, rho_z);
 
-                fp1 = fopen("lam_loc.dat","w");
+                fp1 = fopen("OUTPUT/lam_loc.dat","w");
                 for (i = 0; i < nx; i++)
                     for (j = 0; j< nz; j++) {
                         fwrite(&lam[j*nx+i],sizeof(float),1,fp1);
                     }
                 fclose(fp1);
 
-                fp2 = fopen("mu_loc.dat","w");
+                fp2 = fopen("OUTPUT/mu_loc.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j< nz; j++) {
                         fwrite(&mu[j*nx+i],sizeof(float),1,fp2);
@@ -222,7 +223,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp2);
 
-                fp3 = fopen("muxz_loc.dat","w");
+                fp3 = fopen("OUTPUT/muxz_loc.dat","w");
                 for (i = 0; i < nx; i++)
                     for (j = 0; j< nz; j++) {
                         fwrite(&muxz[j*nx+i],sizeof(float),1,fp3);
@@ -246,7 +247,7 @@ int main(int agrc, char *argv)
                     LAM, MU, RHO, lam11, mu00, mu11, rho01, rho10,
                     lam, mu, muxz, rho_x, rho_z);
 
-                fp1 = fopen("lam_vol.dat","w");
+                fp1 = fopen("OUTPUT/lam_vol.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&lam[j*nx+i],sizeof(float),1,fp1);
@@ -255,7 +256,7 @@ int main(int agrc, char *argv)
                 fclose(fp1);
 
 
-                fp2 = fopen("mu_vol.dat","w");
+                fp2 = fopen("OUTPUT/mu_vol.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&mu[j*nx+i],sizeof(float),1,fp2);
@@ -265,7 +266,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp2);
 
-                fp3 = fopen("muxz_vol.dat","w");
+                fp3 = fopen("OUTPUT/muxz_vol.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&muxz[j*nx+i],sizeof(float),1,fp3);
@@ -274,7 +275,7 @@ int main(int agrc, char *argv)
                 fclose(fp3);
 
 
-                fp3 = fopen("rhox_vol.dat","w");
+                fp3 = fopen("OUTPUT/rhox_vol.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&rho_x[j*nx+i],sizeof(float),1,fp3);
@@ -282,7 +283,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("rhoz_vol.dat","w");
+                fp3 = fopen("OUTPUT/rhoz_vol.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&rho_z[j*nx+i],sizeof(float),1,fp3);
@@ -301,7 +302,7 @@ int main(int agrc, char *argv)
                      c11_2, c13_2, c15_2, c33_2, c35_2, c55_2,
                      rho_x, rho_z);
 
-                fp1 = fopen("c11_1.dat","w");
+                fp1 = fopen("OUTPUT/c11_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c11_1[j*nx+i],sizeof(float),1,fp1);
@@ -310,7 +311,7 @@ int main(int agrc, char *argv)
                 fclose(fp1);
 
 
-                fp2 = fopen("c55_1.dat","w");
+                fp2 = fopen("OUTPUT/c55_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c55_1[j*nx+i],sizeof(float),1,fp2);
@@ -320,7 +321,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp2);
 
-                fp3 = fopen("c13_1.dat","w");
+                fp3 = fopen("OUTPUT/c13_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c13_1[j*nx+i],sizeof(float),1,fp3);
@@ -328,7 +329,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c35_1.dat","w");
+                fp3 = fopen("OUTPUT/c35_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c35_1[j*nx+i],sizeof(float),1,fp3);
@@ -336,7 +337,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c33_1.dat","w");
+                fp3 = fopen("OUTPUT/c33_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c33_1[j*nx+i],sizeof(float),1,fp3);
@@ -344,7 +345,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c15_1.dat","w");
+                fp3 = fopen("OUTPUT/c15_1.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c15_1[j*nx+i],sizeof(float),1,fp3);
@@ -352,7 +353,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp1 = fopen("c11_2.dat","w");
+                fp1 = fopen("OUTPUT/c11_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c11_2[j*nx+i],sizeof(float),1,fp1);
@@ -361,7 +362,7 @@ int main(int agrc, char *argv)
                 fclose(fp1);
 
 
-                fp2 = fopen("c55_2.dat","w");
+                fp2 = fopen("OUTPUT/c55_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c55_2[j*nx+i],sizeof(float),1,fp2);
@@ -371,7 +372,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp2);
 
-                fp3 = fopen("c13_2.dat","w");
+                fp3 = fopen("OUTPUT/c13_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c13_2[j*nx+i],sizeof(float),1,fp3);
@@ -379,7 +380,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c35_2.dat","w");
+                fp3 = fopen("OUTPUT/c35_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c35_2[j*nx+i],sizeof(float),1,fp3);
@@ -387,7 +388,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c33_2.dat","w");
+                fp3 = fopen("OUTPUT/c33_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c33_2[j*nx+i],sizeof(float),1,fp3);
@@ -395,7 +396,7 @@ int main(int agrc, char *argv)
                 }
                 fclose(fp3);
 
-                fp3 = fopen("c15_2.dat","w");
+                fp3 = fopen("OUTPUT/c15_2.dat","w");
                 for (i = 0; i < nx; i++) {
                     for (j = 0; j < nz; j++) {
                         fwrite(&c15_2[j*nx+i],sizeof(float),1,fp3);
@@ -411,57 +412,26 @@ int main(int agrc, char *argv)
 
             free(model_number);
             free(material_type);
-            free(val1);
-            free(val2);
-            free(val3);
-            free(val4);
-            free(val5);
-            free(val6);
-            free(val7);
-            free(val8);
-            free(val9);
-            free(val10);
-            free(val11);
-            free(val12);
-            free(val13);
+            free(val1); free(val2); free(val3); free(val4);
+            free(val5); free(val6); free(val7); free(val8);
+            free(val9); free(val10); free(val11);
+            free(val12); free(val13);
 
-            free(VP);
-            free(VS);
-            free(RHO);
-            free(MU);
-            free(LAM);
-            free(L2M);
+            free(VP); free(VS); free(RHO);
+            free(MU); free(LAM); free(L2M);
 
-            free(lam);
-            free(mu);
-            free(lam2mu);
-            free(muxz);
-            free(rho_x);
-            free(rho_z);
-            free(Bx);
-            free(Bz);
+            free(lam); free(mu); free(lam2mu); free(muxz);
+            free(rho_x); free(rho_z); free(Bx);free(Bz);
 
-            free(lam11);
-            free(mu00);
-            free(mu11);
-            free(rho01);
-            free(rho10);
+            free(lam00); free(lam11);
+            free(mu00); free(mu11);
+            free(rho01); free(rho10);
+            free(lam2mu00); free(lam2mu11);
 
-            free(c11_1);
-            free(c13_1);
-            free(c15_1);
-            free(c35_1);
-            free(c33_1);
-            free(c55_1);
-            free(c11_2);
-            free(c13_2);
-            free(c15_2);
-            free(c35_2);
-            free(c33_2);
-            free(c55_2);
-            free(lam2mu00);
-            free(lam2mu11);
-            free(lam00);
+            free(c11_1); free(c13_1); free(c15_1);
+            free(c35_1); free(c33_1); free(c55_1);
+            free(c11_2); free(c13_2); free(c15_2);
+            free(c35_2); free(c33_2); free(c55_2);
 
         }
 
