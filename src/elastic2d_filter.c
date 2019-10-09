@@ -13,7 +13,6 @@
 
 #include "elastic2d_filter.h"
 
-
 int filter_velocity(int filter_method, int half_fd_stencil, int nx,
                     int ni1, int ni2, int nk1, int nk2,
                     float *Vx_1, float *Vx_2, float *Vz_1, float *Vz_2)
@@ -27,14 +26,14 @@ int filter_velocity(int filter_method, int half_fd_stencil, int nx,
     /* Vx */
     sf01_45(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
     sf10_45(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
-    sf01_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
-    sf10_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    //sf01_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
+    //sf10_135(half_filter_stencil, f_Coe, Vx_1, Vx_2, nx, ni1, ni2, nk1, nk2);
 
     /* Vz */
     sf10_45(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
     sf01_45(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
-    sf10_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
-    sf01_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    //sf10_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
+    //sf01_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
 
     free(f_Coe);
     return 0;
@@ -53,22 +52,22 @@ int filter_stresses(int filter_method, int half_fd_stencil, int nx,
     filter_coe(filter_method, half_fd_stencil, f_Coe, &half_filter_stencil);
 
     /* Txx */
-    sf00_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
-    sf11_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
-    sf00_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
-    sf11_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
-
-    /* Tzz */
-    sf00_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
-    sf11_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
-    sf00_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
-    sf11_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
-
-    /* Txz */
-    sf00_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
-    sf11_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
-    sf00_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
-    sf11_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+//    sf00_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+//    sf11_45(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+//    sf00_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+//    sf11_135(half_filter_stencil, f_Coe, Txx_1, Txx_2, nx, ni1, ni2, nk1, nk2);
+//
+//    /* Tzz */
+//    sf00_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+//    sf11_45(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+//    sf00_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+//    sf11_135(half_filter_stencil, f_Coe, Tzz_1, Tzz_2, nx, ni1, ni2, nk1, nk2);
+//
+//    /* Txz */
+//    sf00_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+//    sf11_45(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+//    sf00_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
+//    sf11_135(half_filter_stencil, f_Coe, Txz_2, Txz_1, nx, ni1, ni2, nk1, nk2);
 
     free(f_Coe);
     return 0;
