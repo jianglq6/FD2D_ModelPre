@@ -25,8 +25,8 @@ CFLAGS := -c -g -I $(SRCDIR) #-std=c99
 # Source File Names
 #=======================================================
 
-SRC := Elastic2d_tti.c elastic2d_src.c elastic2d_lebedev.c staggered_fd_coef.c elastic2d_filter.c elastic2d_math.c elastic2d_abs_exp.c  elastic2d_stf.c read_config_para.c share_param.c write_snapshots.c 
-INC := elastic2d_src.h elastic2d_lebedev.h  staggered_fd_coef.h elastic2d_filter.h elastic2d_math.h elastic2d_abs_exp.h  elastic2d_stf.h read_config_para.h share_param.h write_snapshots.h Elastic2d_tti.h
+SRC := Elastic2d_tti.c elastic2d_src.c elastic2d_lebedev.c staggered_fd_coef.c elastic2d_filter.c elastic2d_math.c elastic2d_abs_exp.c  elastic2d_stf.c read_config_para.c share_param.c write_snapshots.c write_seismograms.c 
+INC := elastic2d_src.h elastic2d_lebedev.h  staggered_fd_coef.h elastic2d_filter.h elastic2d_math.h elastic2d_abs_exp.h  elastic2d_stf.h read_config_para.h share_param.h write_snapshots.h Elastic2d_tti.h write_seismograms.h
 #OBJ := $(SRC:%.c=%.o)
 OBJ := $(foreach file,$(SRC),$(OBJDIR)/$(file:.c=.o))
 

@@ -18,6 +18,7 @@
 #include "staggered_fd_coef.h"
 #include "elastic2d_filter.h"
 #include "write_snapshots.h"
+#include "write_seismograms.h"
 
 //#include "write_seismograms.h"
 
@@ -65,11 +66,20 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
     switch(spatial_difference_method) {
         case 1:
             for (i = 0; i < half_fd_stencil; i++) {
-                fdx[i] = coef(half_fd_stencil,i)/dx;
-                fdz[i] = coef(half_fd_stencil,i)/dz;
+                fdx[i] = ssg_coef(half_fd_stencil,i)/dx;
+                fdz[i] = ssg_coef(half_fd_stencil,i)/dz;
             }
             break;
+        case 2:
+            for (i = 0; i < half_fd_stencil; i++) {
+                fdx[i] = esgfd_coef(half_fd_stencil,i)/dx;
+                fdz[i] = esgfd_coef(half_fd_stencil,i)/dz;
+            }
+            break;
+
+
     }
+
     /* prepare stf */
     //printf("dt: %f\n",dt );
     //for (is = 0; is < src.number_of_src; is++) {
@@ -110,13 +120,12 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                               xvec2, zvec2,  /* for the half grids     */
                               source_impulse_method, src,
                               current_time, dt,
-                              dx, dz, nx,
-                              B01, B10);
+                              dx, dz, nx);
 
         /* Absorbing boundary condition */
-        //ierr = abs_exp_velocity(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
-        //                    boundary_type, boundary_layer_number,
-        //                    hVx_1, hVx_2, hVz_1, hVz_2);
+        ierr = abs_exp_velocity(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
+                            boundary_type, boundary_layer_number,
+                            hVx_1, hVx_2, hVz_1, hVz_2);
 
         /* moment equation to update velocity */
         ierr = update_velocity(nx, nz, dt, Vx_1, Vz_1, Vx_2, Vz_2,
@@ -155,9 +164,9 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                         hTxx_1, hTzz_1, hTxz_1, hTxx_2, hTzz_2, hTxz_2);
 
         /* Absorbing boundary condition */
-        //ierr = abs_exp_stresses(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
-        //                boundary_type,  boundary_layer_number,
-        //                Txx_1, Txx_2, Tzz_1, Tzz_2, Txz_1, Txz_2);
+        ierr = abs_exp_stresses(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
+                        boundary_type,  boundary_layer_number,
+                        Txx_1, Txx_2, Tzz_1, Tzz_2, Txz_1, Txz_2);
 
         /* Filtering stresses */
         if (filter_method != NOFILTER) {
@@ -167,19 +176,22 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                             Txx_2, Tzz_2, Txz_2);
         }
 
+
         /* receiver and snapshot */
-        /*ierr = write_seismograms(config_file,
-                        Vx_1,  Vx_2,
-                        Vz_1,  Vz_2,
-                        Txx_1, Tzz_1,
-                        Txz_1, Txx_2,
-                        Tzz_2, Txz_2,
-                        xvec1, xvec2,
-                        zvec1, zvec2,
-                        it, nt, t0, dt,
-                        nx, nz, dx, dz);
-        */
-       ierr = write_snapshots(Vx_1,  Vx_2,
+        ierr = write_seismograms(Vx_1 , Vx_2,
+                                 Vz_1 , Vz_2,
+                                 Txx_1, Tzz_1,
+                                 Txz_1, Txx_2,
+                                 Tzz_2, Txz_2,
+                                 xvec1, xvec2,
+                                 zvec1, zvec2,
+                                 it+1, nt, dt,
+                                 nx, nz, dx, dz,
+                                 nreceivers, xr, zr,
+                                 save_ASCII_seismograms, save_binary_seismograms,
+                                 NSTEP_BETWEEN_OUTPUT_SEISMOS, seismotype);
+
+        ierr = write_snapshots(Vx_1,  Vx_2,
                     Vz_1,  Vz_2,
                     Txx_1, Tzz_1,
                     Txz_1, Txx_2,

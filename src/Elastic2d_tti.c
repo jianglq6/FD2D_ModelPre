@@ -41,6 +41,8 @@ int main()
     int nreceivers, seismotype, NSTEP_BETWEEN_OUTPUT_SEISMOS;
     bool save_binary_seismograms, save_ASCII_seismograms;
     float *xr=NULL, *zr=NULL;
+    //xr = (float*) malloc(1*sizeof(float));
+    //zr = (float*) malloc(1*sizeof(float));
 /*======================= boundary conditions ========================*/
     int boundary_type[4], boundary_layer_number[4];
 /*=====================  velocity and density model ==================*/
@@ -72,7 +74,7 @@ int main()
                            &source_impulse_method, &src,
                            &seismotype, &NSTEP_BETWEEN_OUTPUT_SEISMOS,
                            &save_ASCII_seismograms, &save_binary_seismograms,
-                           &nreceivers, xr, zr,
+                           &nreceivers, &xr, &zr,
                             boundary_type, boundary_layer_number,
                            &NSTEP_BETWEEN_OUTPUT_INFO,
                            &NSTEP_BETWEEN_OUTPUT_IMAGES, &output_postscript_snapshot,
@@ -175,7 +177,6 @@ int main()
     hVx_1  = creat_component_array(nx_all*nz_all);
     hVx_2  = creat_component_array(nx_all*nz_all);
 
-
 /*======================================================
  * run
  *======================================================*/
@@ -201,7 +202,7 @@ int main()
             sizemax_arrows, US_LETTER,
             output_wavefield_dumps, imagetype_wavefield_dumps,
             use_binary_for_wavefield_dumps);
-//
+
 
     free(xvec1); free(zvec1); free(xvec2); free(zvec2);
     free(c11_1); free(c13_1); free(c15_1); free(c33_1); free(c35_1);

@@ -4,6 +4,10 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#define SNAP_DISPL 1
+#define SNAP_VELOC 2
+#define SNAP_ACCEL 3
+#define SNAP_STRESS 4
 
 int write_snapshots(float *Vx_1,  float *Vx_2,
                     float *Vz_1,  float *Vz_2,

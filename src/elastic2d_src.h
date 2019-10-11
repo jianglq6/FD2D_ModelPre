@@ -41,9 +41,27 @@ int src_tti_force(float *hVx_1, float *hVz_1,
                   float *xvec2, float *zvec2,  /* for the half grids     */
                   int source_impulse_method, struct Src src,
                   float current_time, float dt,
-                  float dx, float dz, int nx,
-                  float *B01, float *B10);
+                  float dx, float dz, int nx);
 
 float cal_source_time_function(int flag_stf_type, float t, float t0, float f0);
 
-float calculate_windowed_impulse(float x, float b, float r);
+double calculate_windowed_impulse(float x, float b, float r);
+
+/* Moment source (sinc distribution) */
+int src_sinc_moment(float *hTxx_1, float *hTxx_2,
+                    float *hTxz_1, float *hTxz_2,
+                    float *hTzz_1, float *hTzz_2,
+                    float *xvec1, float *zvec1,
+                    float *xvec2, float *zvec2,
+                    struct Src src,
+                    float current_time, float dt,
+                    float dx, float dz, int nx);
+
+/* Force source (sinc distribution) */
+int src_sinc_force(float *hVx_1, float *hVz_1,
+                   float *hVx_2, float *hVz_2,
+                   float *xvec1, float *zvec1,  /* for the integer grids  */
+                   float *xvec2, float *zvec2,  /* for the half grids     */
+                   struct Src src,
+                   float current_time, float dt,
+                   float dx, float dz, int nx);

@@ -57,3 +57,4 @@
         # Temporary for Lebedev test
 
   4) cd OUTPUT/ file for your results
+     or you can cd mfiles/plot_* to plot the wavefields or seismo

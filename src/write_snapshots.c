@@ -125,7 +125,7 @@ int write_wavefield_dumps(float *Vx_1,  float *Vx_2,
     }
 
     /* write the velocity components */
-    if (imagetype_wavefield_dumps==2) {
+    if (imagetype_wavefield_dumps==SNAP_VELOC) {
         if (use_binary_for_wavefield_dumps) {
             /*For Vx1*/
             snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Vx1.bin",it);
@@ -166,39 +166,161 @@ int write_wavefield_dumps(float *Vx_1,  float *Vx_2,
             /*For Vx1*/
             snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Vx1.txt",it);
             fp_field = gfopen(fn,"w");
-            for (ix=0; ix<nx; ix++) {
-                for (iz=0; iz<nz; iz++)
-                    fprintf(fp_field, "%f\n",Vx_1[iz*nx+ix]);
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Vx_1[iz*nx+ix]);
+                fprintf(fp_field,"\n");
             }
             fclose(fp_field);
             /* For Vx2 */
             snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Vx2.txt",it);
             fp_field = gfopen(fn,"w");
-            for (ix=0; ix<nx; ix++) {
-                for (iz=0; iz<nz; iz++)
-                    fprintf(fp_field, "%f\n",Vx_2[iz*nx+ix]);
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Vx_2[iz*nx+ix]);
+                fprintf(fp_field,"\n");
             }
             fclose(fp_field);
 
             /*For Vz1*/
             snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Vz1.txt",it);
             fp_field = gfopen(fn,"w");
-            for (ix=0; ix<nx; ix++) {
-                for (iz=0; iz<nz; iz++)
-                    fprintf(fp_field, "%f\n",Vz_1[iz*nx+ix]);
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Vz_1[iz*nx+ix]);
+                fprintf(fp_field,"\n");
             }
             fclose(fp_field);
             /* For Vz2 */
             snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Vz2.txt",it);
             fp_field = gfopen(fn,"w");
-            for (ix=0; ix<nx; ix++) {
-                for (iz=0; iz<nz; iz++)
-                    fprintf(fp_field, "%f\n",Vz_2[iz*nx+ix]);
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Vz_2[iz*nx+ix]);
+                fprintf(fp_field,"\n");
             }
             fclose(fp_field);
 
         }
     }
+
+ /* write the velocity components */
+    if (imagetype_wavefield_dumps==SNAP_STRESS) {
+        if (use_binary_for_wavefield_dumps) {
+            /*For Txx1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txx1.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Txx_1[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+            /* For Txx2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txx2.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Txx_2[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+
+            /*For Tzz1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Tzz1.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Tzz_1[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+            /* For Tzz2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Tzz2.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Tzz_2[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+
+            /*For Txz1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txz1.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Txz_1[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+            /* For Txz2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txz2.bin",it);
+            fp_field = gfopen(fn,"wb");
+            for (ix=0; ix<nx; ix++) {
+                for (iz=0; iz<nz; iz++)
+                    fwrite(&Txz_2[iz*nx+ix],sizeof(float),1,fp_field);
+            }
+            fclose(fp_field);
+        }
+        /* write ASCII version */
+        else {
+            /*For Txx1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txx1.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Txx_1[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+            /* For Txx2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txx2.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Txx_2[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+
+            /*For Tzz1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Tzz1.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Tzz_1[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+            /* For Tzz2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Tzz2.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Tzz_2[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+
+            /*For Txz1*/
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txz1.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Txz_1[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+            /* For Txz2 */
+            snprintf(fn, sizeof(fn),"OUTPUT/wavefield%07d_Txz2.txt",it);
+            fp_field = gfopen(fn,"w");
+            for (iz=0; iz<nz; iz++) {
+                for (ix=0; ix<nx; ix++)
+                    fprintf(fp_field, "%-20.6e",Txz_2[iz*nx+ix]);
+                fprintf(fp_field, "\n");
+            }
+            fclose(fp_field);
+
+        }
+    }
+
+
     return 0;
 }
 

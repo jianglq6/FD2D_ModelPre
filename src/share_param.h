@@ -11,7 +11,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     int *source_impulse_method, struct Src *src,
     int *seismotype, int *NSTEP_BETWEEN_OUTPUT_SEISMOS,
     bool *save_ASCII_seismograms, bool *save_binary_seismograms,
-    int *nreceiver, float *xr, float *zr,
+    int *nreceiver, float **xr, float **zr,
     int *boundary_type, int *boundary_layer_number,
     int *NSTEP_BETWEEN_OUTPUT_INFO,
     int *NSTEP_BETWEEN_OUTPUT_IMAGES, bool *output_postscript_snapshot,
@@ -21,3 +21,5 @@ int get_config_info(char *config_file, int *nt, float *dt,
     bool *use_binary_for_wavefield_dumps);
 
 int write_station_coor_file(int nreceivers, float *xr, float *zr);
+
+void getFloatMemory(float **p, int size);

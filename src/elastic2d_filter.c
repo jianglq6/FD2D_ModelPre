@@ -17,10 +17,10 @@ int filter_velocity(int filter_method, int half_fd_stencil, int nx,
                     int ni1, int ni2, int nk1, int nk2,
                     float *Vx_1, float *Vx_2, float *Vz_1, float *Vz_2)
 {
-    float *f_Coe=NULL;
+    float f_Coe[10];
     int  half_filter_stencil;
 
-    f_Coe = (float*)malloc(half_fd_stencil*sizeof(float));
+    //f_Coe = (float*)malloc(half_fd_stencil*sizeof(float));
     filter_coe(filter_method, half_fd_stencil, f_Coe, &half_filter_stencil);
 
     /* Vx */
@@ -35,7 +35,6 @@ int filter_velocity(int filter_method, int half_fd_stencil, int nx,
     //sf10_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
     //sf01_135(half_filter_stencil, f_Coe, Vz_2, Vz_1, nx, ni1, ni2, nk1, nk2);
 
-    free(f_Coe);
     return 0;
 }
 
@@ -342,7 +341,7 @@ int SFsCoe(int half_fd_stencil, float *SFs, int *half_sf_stencil)
     if (half_fd_stencil <= 4)
     {
         *half_sf_stencil = 4;
-        SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
+        //SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
         SFs[0] = 35.0/128.0;
         SFs[1] = -7.0/32.0;
         SFs[2] = 7.0/64.0;
@@ -352,7 +351,7 @@ int SFsCoe(int half_fd_stencil, float *SFs, int *half_sf_stencil)
     else if (half_fd_stencil <= 5)
     {
         *half_sf_stencil = 5;
-        SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
+        //SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
         SFs[0] =   63.0/256.0;
         SFs[1] = -105.0/512.0;
         SFs[2] =   15.0/128.0;
@@ -364,7 +363,7 @@ int SFsCoe(int half_fd_stencil, float *SFs, int *half_sf_stencil)
     else if (half_fd_stencil >= 6)
     {
         *half_sf_stencil = 6;
-        SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
+        //SFs = (float*)realloc(SFs, (*half_sf_stencil+1)*sizeof(float));
         SFs[0] = 231.0/1024.0;
         SFs[1] = -99.0/ 512.0;
         SFs[2] = 495.0/4096.0;
@@ -383,7 +382,7 @@ int SFoCoe(int half_fd_stencil, float *SFo, int *half_sf_stencil)
     if (half_fd_stencil <= 4)
     {
         *half_sf_stencil = 4;
-        SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
+        //SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
         SFo[0] =  0.243527493120;
         SFo[1] = -0.201788880640;
         SFo[2] =  0.120007591680;
@@ -394,7 +393,7 @@ int SFoCoe(int half_fd_stencil, float *SFo, int *half_sf_stencil)
     else if (half_fd_stencil <= 5)
     {
         *half_sf_stencil = 5;
-        SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
+        //SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
         SFo[0] =  0.215044884112;
         SFo[1] = -0.187772883589;
         SFo[2] =  0.123755948787;
@@ -406,7 +405,7 @@ int SFoCoe(int half_fd_stencil, float *SFo, int *half_sf_stencil)
     else if (half_fd_stencil >= 6)
     {
         *half_sf_stencil = 6;
-        SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
+        //SFo = (float*)realloc(SFo, (*half_sf_stencil+1)*sizeof(float));
         SFo[0] =  0.190899511506;
         SFo[1] = -0.171503832236;
         SFo[2] =  0.123632891797;

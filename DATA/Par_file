@@ -27,10 +27,10 @@ half_fd_stencil                 = 4
 spatial_difference_method       = 1
 
 #-----------------------------------------------
-# TODO: filter method: Just for Lebedev test
+# !! TODO: filter method: Just for Lebedev test
 #------------------------------------------------
 # 0: no filter, 1: standard selective filter, 2 optimized selective filter
-filter_method                   = 2
+filter_method                   = 0
 
 #---------------------------------------------------------------------------------
 #
@@ -56,7 +56,7 @@ nz                              = 601               # number of grids on the x-a
 #  2. one set of grids add S, while the weights at the other points should be 1/4;
 #  3. dicrete source mathod Sinc [ref: Hicks, 2002, Arbitrary source and receiver positioning in FD schemes] )
 #TODO  just for test!
-source_impulse_method           = 1
+source_impulse_method           = 3
 
 # source parameters
 NSOURCES                        = 1                  # number of sources

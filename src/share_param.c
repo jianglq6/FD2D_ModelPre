@@ -9,7 +9,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     int *source_impulse_method, struct Src *src,
     int *seismotype, int *NSTEP_BETWEEN_OUTPUT_SEISMOS,
     bool *save_ASCII_seismograms, bool *save_binary_seismograms,
-    int *nreceiver, float *xr, float *zr,
+    int *nreceiver, float **xr, float **zr,
     int *boundary_type, int *boundary_layer_number,
     int *NSTEP_BETWEEN_OUTPUT_INFO,
     int *NSTEP_BETWEEN_OUTPUT_IMAGES, bool *output_postscript_snapshot,
@@ -22,9 +22,11 @@ int get_config_info(char *config_file, int *nt, float *dt,
 
     int is, ireceiverset, nreceiversets, i, ireceiver=0, nreceivers = 0;
     int *nrec=NULL, ierr = 0;
-    float *xdeb=NULL, *zdeb=NULL, *xfin=NULL, *zfin=NULL;
+    float *xdeb=NULL, *zdeb=NULL, *xfin=NULL, *zfin=NULL, *tmp=NULL;
     bool use_existing_station;
     FILE *fid=gfopen(config_file, "r");
+    /* For matlab plot */
+    FILE *fp_mfile = gfopen("./mfiles/configure","w");
 
     fprintf(stdout, "===========================================\n");
     fprintf(stdout, "       simulation input parameters         \n");
@@ -39,6 +41,8 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fprintf(stdout, "\n-------\nTime information \n");
     fprintf(stdout, "   Time step DT = %f, total number of time steps NSTEP = %d.\n",
              *dt, *nt);
+    fprintf(fp_mfile, "%-42.6f    dt\n", *dt);
+    fprintf(fp_mfile, "%-42d    nt\n", *nt);
 
     /*========================= grid information ==========================*/
     read_value_float(fid, "xmin", xmin, &ierr);
@@ -50,6 +54,9 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fprintf(stdout, "\n-------\nGeometry and the grid setting of the model.\n");
     fprintf(stdout, "   xmin = %f, dx = %f, nx = %d\n", *xmin, *dx, *nx);
     fprintf(stdout, "   zmin = %f, dz = %f, nz = %d\n", *zmin, *dz, *nz);
+
+    fprintf(fp_mfile, "%-14.6f%-14.6f%-14d    xmin dx nx\n", *xmin, *dx, *nx);
+    fprintf(fp_mfile, "%-14.6f%-14.6f%-14d    zmin dz nz\n", *zmin, *dz, *nz);
 
     /*========================== source information ========================*/
     //-- initiate source
@@ -122,21 +129,27 @@ int get_config_info(char *config_file, int *nt, float *dt,
         for (ireceiverset = 0; ireceiverset < nreceiversets; ireceiverset++) {
             nreceivers += nrec[ireceiverset];
         }
-        xr = (float*) malloc(nreceivers*sizeof(float));
-        zr = (float*) malloc(nreceivers*sizeof(float));
+
+        printf("nreceiver: %d\n",nreceivers);
+
+        getFloatMemory(xr, nreceivers);
+        getFloatMemory(zr, nreceivers);
+
+        printf("%f\n\n",(*xr)[5]);
+
 
         for(ireceiverset = 0; ireceiverset < nreceiversets; ireceiverset++) {
             for (i = 0; i < nrec[ireceiverset]; i++) {
-                xr[ireceiver] = xdeb[ireceiverset] + (xfin[ireceiverset] - xdeb[ireceiverset])/
-                                (nrec[ireceiverset]-1) * i;
-                zr[ireceiver] = zdeb[ireceiverset] + (zfin[ireceiverset] - zdeb[ireceiverset])/
-                                (nrec[ireceiverset]-1) * i;
+                (*xr)[ireceiver] = xdeb[ireceiverset] + (xfin[ireceiverset] - xdeb[ireceiverset])/
+                                   (nrec[ireceiverset]-1) * i;
+                (*zr)[ireceiver] = zdeb[ireceiverset] + (zfin[ireceiverset] - zdeb[ireceiverset])/
+                                   (nrec[ireceiverset]-1) * i;
                 ireceiver++;
             }
         }
 
         /* write station coordinates to DATA/STATION */
-        write_station_coor_file(nreceivers, xr, zr);
+        write_station_coor_file(nreceivers, *xr, *zr);
         fprintf(stdout, "writing the %s file\n", STATION_FILE );
     }
     *nreceiver = nreceivers;
@@ -146,7 +159,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
 
     for (ireceiver = 0; ireceiver<nreceivers; ireceiver++)
     {
-        fprintf(stdout, "   Receiver %6d = %20.6f %20.6f\n", ireceiver+1, xr[ireceiver], zr[ireceiver]);
+        fprintf(stdout, "   Receiver %6d = %20.6f %20.6f\n", ireceiver+1, (*xr)[ireceiver], (*zr)[ireceiver]);
     }
 
     free(nrec);
@@ -190,7 +203,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     read_value_int(fid, "imagetype_wavefield_dumps", imagetype_wavefield_dumps, &ierr);
 
     fclose(fid);
-
+    fclose(fp_mfile);
     fprintf(stdout, "\n");
     return ierr;
 }
@@ -206,4 +219,13 @@ int write_station_coor_file(int nreceivers, float *xr, float *zr)
         fprintf(fp, "S%04d     AA %20.6f %20.6f\n", (ir+1), xr[ir], zr[ir]);
     fclose(fp);
     return;
+}
+
+void getFloatMemory(float **p, int size)
+{
+    *p = malloc(sizeof(float)*size);
+    if (NULL == *p) {
+        printf("malloc failed! \n");
+        *p = NULL;
+    }
 }

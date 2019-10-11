@@ -14,11 +14,10 @@
  * History: 08/2019: Original version created by Luqian Jiang
  *
  ***************************************************************************/
-
 #include "elastic2d_math.h"
 #include "staggered_fd_coef.h"
 
-double coef(int o, int n)
+double ssg_coef(int o, int n)
 {
     double B[o], A[o][o+1], *C;
     int i,j;
@@ -69,4 +68,52 @@ double *DirectLU(double *u, int n)
 
     return x;
     free(x);
+}
+
+/********************************************************************
+ * Optimal staggered-grid finite-difference schemes
+ *
+ *  ref: Liu, 2014, Optimal staggered-grid finite-difference schemes
+ *              based on least-squares for wave equation modelling
+ *
+ ********************************************************************/
+
+float esgfd_coef(int o, int n)
+{
+    float A[o];
+    switch(o) {
+        case 2 :
+            A[0] = -0.1129042e+1;
+            A[1] =  0.4301412e-1;
+            break;
+        case 3 :
+            A[0] =  0.1185991e+1;
+            A[1] = -0.7249965e-1;
+            A[2] =  0.6301572e-2;
+            break;
+        case 4 :
+            A[0] =  0.1217990e+1;
+            A[1] = -0.9382142e-1;
+            A[2] =  0.1507536e-1;
+            A[3] = -0.1700324e-2;
+            break;
+        case 5 :
+            A[0] =  0.1236607e+1;
+            A[1] = -0.1082265e+0;
+            A[2] =  0.2343440e-1;
+            A[3] = -0.5033546e-2;
+            A[4] =  0.6817483e-3;
+            break;
+        case 6 :
+            A[0] =  0.1247662e+1;
+            A[1] = -0.1175538e+0;
+            A[2] =  0.2997970e-1;
+            A[3] = -0.8719078e-2;
+            A[4] =  0.2215897e-2;
+            A[5] = -0.3462075e-3;
+            break;
+    }
+
+    return A[n];
+
 }
