@@ -1,3 +1,25 @@
+/*************************************************************************
+ *
+ * This function is used to get the information of the configuration file
+ *   and print the information if needed. It contains the function of
+ *   converting the receiver sets to the coordinate of each receiver.
+ *
+ *
+ * Authors: Luqian Jiang   Email: jlq0608@gmail.com
+ *          Wei Zhang      Email: zhangwei@sustc.edu.cn
+ *
+ * Copyright (c) 2018-2019 zwlab
+ *
+ * Version: 1.0
+ *
+ * Date: 9/2019
+ *
+ * History:
+ *     9/2019: Original version created by Luqian Jiang
+ *
+ *
+ ************************************************************************/
+
 #include "elastic2d_src.h"
 #include "read_config_para.h"
 #include "share_param.h"
@@ -11,6 +33,9 @@ int get_config_info(char *config_file, int *nt, float *dt,
     bool *save_ASCII_seismograms, bool *save_binary_seismograms,
     int *nreceiver, float **xr, float **zr,
     int *boundary_type, int *boundary_layer_number,
+    bool *use_existing_model, int *nbmodels,
+    char *materialfile, char *interfacesfile, int *save_model,
+    int *effective_para_method,
     int *NSTEP_BETWEEN_OUTPUT_INFO,
     int *NSTEP_BETWEEN_OUTPUT_IMAGES, bool *output_postscript_snapshot,
     int *imagetype_postscript, bool *meshvect, bool *modelvect, bool *boundvect,
@@ -24,6 +49,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     int *nrec=NULL, ierr = 0;
     float *xdeb=NULL, *zdeb=NULL, *xfin=NULL, *zfin=NULL, *tmp=NULL;
     bool use_existing_station;
+
     FILE *fid=gfopen(config_file, "r");
     /* For matlab plot */
     FILE *fp_mfile = gfopen("./mfiles/configure","w");
@@ -32,7 +58,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fprintf(stdout, "       simulation input parameters         \n");
     fprintf(stdout, "===========================================\n");
 
-    /*========================= time information ==========================*/
+    /*====================== simulation information =======================*/
     read_value_int(fid, "NSTEP", nt,&ierr);
     read_value_float(fid, "DT",  dt, &ierr);
     read_value_int(fid,"half_fd_stencil", half_fd_stencil, &ierr);
@@ -79,7 +105,6 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fprintf(stdout, "\n-------\nSource parameters\n");
     fprintf(stdout, "   Source impulse method: %d\n", *source_impulse_method);
     fprintf(stdout, "   number of sources: %d\n", src->number_of_src);
-
 
     for (is = 0; is < src->number_of_src; is++) {
         read_value_float_next_p(fid, "xs" ,                &(src->xs[is]            ), &ierr);
@@ -140,10 +165,16 @@ int get_config_info(char *config_file, int *nt, float *dt,
 
         for(ireceiverset = 0; ireceiverset < nreceiversets; ireceiverset++) {
             for (i = 0; i < nrec[ireceiverset]; i++) {
-                (*xr)[ireceiver] = xdeb[ireceiverset] + (xfin[ireceiverset] - xdeb[ireceiverset])/
-                                   (nrec[ireceiverset]-1) * i;
-                (*zr)[ireceiver] = zdeb[ireceiverset] + (zfin[ireceiverset] - zdeb[ireceiverset])/
-                                   (nrec[ireceiverset]-1) * i;
+                if (nrec[ireceiverset] == 1) {
+                    (*xr)[ireceiver] = xdeb[ireceiverset];
+                    (*zr)[ireceiver] = zdeb[ireceiverset];
+                }
+                else {
+                    (*xr)[ireceiver] = xdeb[ireceiverset] + (xfin[ireceiverset] - xdeb[ireceiverset])/
+                                       (nrec[ireceiverset]-1) * i;
+                    (*zr)[ireceiver] = zdeb[ireceiverset] + (zfin[ireceiverset] - zdeb[ireceiverset])/
+                                       (nrec[ireceiverset]-1) * i;
+                }
                 ireceiver++;
             }
         }
@@ -184,9 +215,18 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fprintf(stdout, "    top:%d, bottom: %d, left: %d, right: %d\n",
             boundary_layer_number[2], boundary_layer_number[3], boundary_layer_number[0], boundary_layer_number[1]);
 
+    /*======================== velocity and density model ====================*/
+    read_value_bool(fid, "use_existing_model", use_existing_model, &ierr);
+    read_value_int(fid, "nbmodels", nbmodels, &ierr);
+    read_value_string(fid, "materialfile"  , materialfile,   &ierr);
+    read_value_string(fid, "interfacesfile", interfacesfile, &ierr);
+    read_value_int(fid, "save_model", save_model, &ierr);
+
+    /*======================= effective parameter method ======================*/
+    read_value_int(fid, "effective_para_method", effective_para_method, &ierr);
+
     /*======================= display parameters =============================*/
     read_value_int(fid, "NSTEP_BETWEEN_OUTPUT_INFO", NSTEP_BETWEEN_OUTPUT_INFO, &ierr);
-
 
     /*====================== movies/images/snapshots =========================*/
     read_value_int(fid, "NSTEP_BETWEEN_OUTPUT_IMAGES", NSTEP_BETWEEN_OUTPUT_IMAGES, &ierr);
@@ -205,6 +245,7 @@ int get_config_info(char *config_file, int *nt, float *dt,
     fclose(fid);
     fclose(fp_mfile);
     fprintf(stdout, "\n");
+
     return ierr;
 }
 
@@ -216,7 +257,7 @@ int write_station_coor_file(int nreceivers, float *xr, float *zr)
     FILE *fp = NULL;
     fp = fopen(STATION_FILE, "w");
     for (ir = 0; ir < nreceivers; ir++)
-        fprintf(fp, "S%04d     AA %20.6f %20.6f\n", (ir+1), xr[ir], zr[ir]);
+        fprintf(fp, "S%04d %20.6f %20.6f\n", (ir+1), xr[ir], zr[ir]);
     fclose(fp);
     return;
 }

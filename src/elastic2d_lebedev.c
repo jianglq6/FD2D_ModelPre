@@ -49,12 +49,12 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
     float current_time;
 
     ni1 = half_fd_stencil;
-    ni2 = nx - half_fd_stencil-1;
+    ni2 = nx - half_fd_stencil;
     nk1 = half_fd_stencil;
-    nk2 = nz - half_fd_stencil-1;
+    nk2 = nz - half_fd_stencil;
     //fprintf(stdout, "calculation area: %d %d %d %d\n", ni1, ni2, nk1, nk2);
 
-/* ! Check stability */
+/* ! TODO: Check stability */
     //
 
     /*---------------------------------------------------------*/
@@ -74,9 +74,9 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
             for (i = 0; i < half_fd_stencil; i++) {
                 fdx[i] = esgfd_coef(half_fd_stencil,i)/dx;
                 fdz[i] = esgfd_coef(half_fd_stencil,i)/dz;
+                printf("%f %f\n",fdx[i], fdz[i] );
             }
             break;
-
 
     }
 
@@ -94,7 +94,8 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
     /*==========================================================*/
     /* Time loop to simulate wavefield propagation              */
     /*==========================================================*/
-    fprintf(stdout, "RUN");
+    fprintf(stdout, "RUN...\n");
+
     for (it = 0; it < nt; it++) {
 
         current_time = dt*it;
@@ -115,21 +116,21 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                             hVx_2, hVz_2, Txx_2, Txz_2, Tzz_2);
 
         /* Force source */
-        ierr =  src_tti_force(hVx_1, hVz_1, hVx_2, hVz_2,
+        ierr =  src_force_lebedev(hVx_1, hVz_1, hVx_2, hVz_2,
                               xvec1, zvec1,  /* for the integer grids  */
                               xvec2, zvec2,  /* for the half grids     */
                               source_impulse_method, src,
                               current_time, dt,
                               dx, dz, nx);
 
-        /* Absorbing boundary condition */
-        ierr = abs_exp_velocity(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
-                            boundary_type, boundary_layer_number,
-                            hVx_1, hVx_2, hVz_1, hVz_2);
-
         /* moment equation to update velocity */
         ierr = update_velocity(nx, nz, dt, Vx_1, Vz_1, Vx_2, Vz_2,
                             hVx_1, hVz_1, hVx_2, hVz_2, B10, B01);
+
+        /* Absorbing boundary condition */
+        ierr = abs_exp_velocity(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
+                            boundary_type, boundary_layer_number,
+                            Vx_1, Vx_2, Vz_1, Vz_2);
 
         /* Filtering velocity */
         if (filter_method != NOFILTER) {
@@ -153,7 +154,7 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                         c11_2 , c13_2 , c15_2 , c33_2, c35_2, c55_2 );
 
         /* Moment source */
-        ierr = src_tti_moment(hTxx_1, hTxx_2, hTxz_1, hTxz_2, hTzz_1, hTzz_2,
+        ierr = src_moment_lebedev(hTxx_1, hTxx_2, hTxz_1, hTxz_2, hTzz_1, hTzz_2,
                              xvec1, zvec1, xvec2, zvec2,
                              source_impulse_method, src, current_time, dt,
                              dx, dz, nx);

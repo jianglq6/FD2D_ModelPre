@@ -1,6 +1,6 @@
 /*************************************************************************
  *
- * This function is used for media parameterization, which include many
+ * These functions is used for media parameterization, which include many
  *  difference method:
  * 1. GRI: grid average method (Graves - 1996 - Simulating seismic wave
  *         propagation in 3D elastic media using staggered-grid finite
@@ -26,7 +26,8 @@
  *
  * History:
  *     04/2019: Original version created by Luqian Jiang
- *
+ *     11/2019: Luqian Jiang:
+ *         combine with modeling, bounduary expansion
  *
  ************************************************************************/
 
@@ -45,86 +46,96 @@
 
 /* LOC */
 int media_parameterization_loc(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *xvec, float *zvec,
+        float dx, float dz, int nx, int nz, float *xvec1, float *zvec1, float *xvec2, float *zvec2,
         float *LAM, float *MU, float *RHO, float *L2M,
-        float *lam, float *mu, float *muxz, float *rho_x, float *rho_z)
+        float *lam2mu, float *lam, float *muxz, float *rho_x, float *rho_z,
+        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
     printf("LOC: dx: %f, dz: %f, num_of_interfaces: %d\n",dx,dz,number_of_interfaces);
 
-    int ierr, ix, iz;
+    int ierr=0, ix, iz;
 
     // Need error judgement !!!
     /*lam2mu, lam*/
-    parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz,  MU, mu);
-    parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, LAM, lam);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0],
+            dx, dz, nx, nz, LAM, lam, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0],
+            dx, dz, nx, nz, L2M, lam2mu, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*rho_x*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin, dx, dz, nx, nz, RHO, rho_x);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec1[0],
+            dx, dz, nx, nz, RHO, rho_x, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
 
     /*rho_z*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin+dz/2, dx, dz, nx, nz, RHO, rho_z);
-
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec2[0],
+            dx, dz, nx, nz, RHO, rho_z, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*muxz*/
-    parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, MU, muxz);
-
-    return 0;
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0],
+            dx, dz, nx, nz, MU, muxz, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    return ierr;
 }
 
 
 /* GRI*/
 int media_parameterization_gri(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *xvec, float *zvec,
+        float dx, float dz, int nx, int nz, float *xvec1, float *zvec1, float *xvec2, float *zvec2,
         float *LAM, float *MU, float *RHO, float *L2M,
-        float *lam, float *lam2mu, float *muxz,  float *Bx, float *Bz, float *rho, float *mu)
+        float *lam2mu, float *lam, float *muxz,  float *Bx, float *Bz, float *rho, float *mu,
+        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
     printf("GRI: dx: %f, dz: %f, num_of_interfaces: %d\n",dx,dz,number_of_interfaces);
 
     int ix, iz;
-    int ierr;
+    int ierr=0;
 
 
     /*lam2mu, lam*/
-    parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, L2M, lam2mu);
-    parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, LAM, lam);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, L2M, lam2mu, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, LAM, lam, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /* rho */
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, RHO, rho);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, RHO, rho, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+
     if (!ierr) {
         /* Bx */
-        for (ix = 0; ix < nx-1; ix++) {
-            for (iz = 0; iz < nz; iz++) {
+        for (ix = nghost_x1; ix < nx-1-nghost_x2; ix++) {
+            for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
                 Bx[iz*nx + ix] = 1/rho[iz*nx + ix] + 1/rho[iz*nx + (ix+1)];
             }
         }
-        for (iz = 0; iz < nz; iz++) {
+        for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
             Bx[iz*nx + nx] = Bx[iz*nx + (nx-1)];
         }
 
         /* Bz */
-        for (ix = 0; ix < nx; ix++) {
-            for (iz = 1; iz < nz; iz++) {
+        for (ix = nghost_x1; ix < nx-nghost_x2; ix++) {
+            for (iz = nghost_z1+1; iz < nz-nghost_z2; iz++) {
                 Bz[iz*nx + ix] = 1/rho[iz*nx + ix] + 1/rho[(iz-1)*nx + ix];
             }
         }
-        for (ix = 0; ix < nx; ix++) {
+        for (ix = nghost_x1; ix < nx-nghost_x2; ix++) {
             Bz[0*nx + ix] = Bz[1*nx + ix];
         }
     }
 
     /* muxz */
-    parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, MU, mu);
-    for (ix = 0; ix < nx-1; ix++) {
-        for (iz = 1; iz < nz; iz++) {
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, MU, mu, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    for (ix = nghost_x1; ix < nx-1-nghost_x2; ix++) {
+        for (iz = nghost_z1+1; iz < nz-nghost_z2; iz++) {
             muxz[iz*nx + ix] = 4.0 / ( 1/mu[(iz-1)*nx + ix] + 1/mu[iz*nx + ix    ]
                                     +  1/mu[(iz-1)*nx + ix] + 1/mu[iz*nx + (ix+1)]);
         }
     }
-    for (iz = 1; iz < nz; iz++) {
+    for (iz = nghost_z1 + 1; iz < nz-nghost_z2; iz++) {
         muxz[iz*nx + nx] = mu[iz*nx + (nx-1)];
     }
-    for (ix = 0; ix < nx; ix++) {
+    for (ix = nghost_x1; ix < nx - nghost_x2; ix++) {
         muxz[0*nx + ix] = mu[1*nx + ix];
     }
 
@@ -132,17 +143,19 @@ int media_parameterization_gri(struct interfaces *interface, int number_of_inter
     free(rho);
     free(mu);
 
-    return 0;
+    return ierr;
 
 }
 
 
 int media_parameterization_vol(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *xvec, float *zvec,
-        float *LAM, float *MU, float *RHO, float *lam11, float *mu00, float *mu11, float *rho01, float *rho10,
-        float *lam, float *mu, float *muxz,  float *rho_x, float *rho_z)
+        float dx, float dz, int nx, int nz, float *xvec1, float *zvec1, float *xvec2, float *zvec2,
+        float *LAM, float *MU, float *RHO, float *L2M,
+        float *lam2mu11, float *lam11, float *mu00, float *rho01, float *rho10,
+        float *lam2mu, float *lam, float *muxz,  float *rho_x, float *rho_z,
+        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
-    int   *ix = NULL, *iz = NULL, *loc_type = NULL;
+    int   *ix = NULL, *iz = NULL, *loc_type = NULL; //ix, iz there is the layer of grid
     float *area1 = NULL, *area2 = NULL, *theta = NULL;
     float xvec_h[nx], zvec_h[nz];  // xvec-dx/2, zvec-dz/2.
     int   ix_h, iz_h, npoints_layer, i_point, index, ierr, i_interface;
@@ -150,9 +163,9 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
     int i,j;
 
     for (ix_h = 0; ix_h < nx; ix_h++)
-        xvec_h[ix_h] = xvec[ix_h] - dx/2;
+        xvec_h[ix_h] = xvec1[ix_h] - dx/2;
     for (iz_h = 0; iz_h < nz; iz_h++)
-        zvec_h[iz_h] = zvec[iz_h] - dz/2;
+        zvec_h[iz_h] = zvec1[iz_h] - dz/2;
 
     ix       = (int*)malloc(MAX_LAYER_POINTS*sizeof(int));
     iz       = (int*)malloc(MAX_LAYER_POINTS*sizeof(int));
@@ -170,25 +183,34 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
 
 
     /* assginment first */
-    // Need error judgement !!!
     /* mu, lam*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, MU, mu);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, LAM, lam);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, MU, mu00);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, L2M, lam2mu, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, LAM, lam, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, MU, mu00, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*rho_x*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin, dx, dz, nx, nz, RHO, rho_x);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin, dx, dz, nx, nz, RHO, rho01);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec1[0], dx, dz,
+            nx, nz, RHO, rho_x, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec1[0], dx, dz,
+            nx, nz, RHO, rho01, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
 
     /*rho_z*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin+dz/2, dx, dz, nx, nz, RHO, rho_z);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin+dz/2, dx, dz, nx, nz, RHO, rho10);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec2[0], dx, dz,
+            nx, nz, RHO, rho_z, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec2[0], dx, dz,
+            nx, nz, RHO, rho10, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*muxz*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, MU, muxz);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, MU, mu11);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, LAM, lam11);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, MU, muxz, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, L2M, lam2mu11, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, LAM, lam11, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /* volumn arithmetic and harmonic averaging */
     /* calculate the area */
@@ -197,27 +219,29 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
         /*-- For sigma_xx, sigma_zz: lam, mu, center of the volum is 00 --*/
         cal_dip_area(xvec_h, zvec_h, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
-            &npoints_layer,ix, iz, loc_type, area1, area2, theta);
+            &npoints_layer, ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0 ) {
+            if ( iz[i_point] >= nghost_z1 && iz[i_point] < nz-nghost_z2
+              && ix[i_point] >= nghost_x1 && ix[i_point] < nx-nghost_x2 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 lam[index] = cal_har_averaging(loc_type[i_point], lam11[index-1-nx], lam11[index-nx], lam11[index-1],
-                                               lam11[index], area1[i_point], area2[i_point]);
-                mu[index]  = cal_har_averaging(loc_type[i_point],  mu11[index-1-nx],  mu11[index-nx],  mu11[index-1],
-                                               mu11[index], area1[i_point], area2[i_point]);
+                                        lam11[index], area1[i_point], area2[i_point]);
+                lam2mu[index] = cal_har_averaging(loc_type[i_point], lam2mu11[index-1-nx], lam2mu11[index-nx],
+                                        lam2mu11[index-1], lam2mu11[index], area1[i_point], area2[i_point]);
 
             }
 
         }
 
         /*-- For sigma_xz: muxz , center of the volum is 11 --*/
-        cal_dip_area(xvec, zvec, dx, dz, nx, nz,
+        cal_dip_area(xvec1, zvec1, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer, ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0 ) {
+            if ( iz[i_point] >= nghost_z1 && iz[i_point] < nz-nghost_z2
+              && ix[i_point] >= nghost_x1 && ix[i_point] < nx-nghost_x2 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 muxz[index] = cal_har_averaging(loc_type[i_point], mu00[index], mu00[index+1], mu00[index+nx],
                                                 mu00[index+nx+1], area1[i_point], area2[i_point]);
@@ -226,12 +250,13 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
         }
 
       /*-- For v_x: rho_x , center of the volum is 01 --*/
-        cal_dip_area(xvec, zvec_h, dx, dz, nx, nz,
+        cal_dip_area(xvec1, zvec_h, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer, ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0 ) {
+            if ( iz[i_point] >= nghost_z1 && iz[i_point] < nz-nghost_z2
+              && ix[i_point] >= nghost_x1 && ix[i_point] < nx-nghost_x2 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 rho_x[index] = cal_ari_averaging(loc_type[i_point], rho10[index-nx], rho10[index-nx+1], rho10[index],
                                                  rho10[index+1], area1[i_point], area2[i_point]);
@@ -239,12 +264,13 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
         }
 
         /*-- For v_z: rho_z , center of the volum is 10 --*/
-        cal_dip_area(xvec_h, zvec, dx, dz, nx, nz,
+        cal_dip_area(xvec_h, zvec1, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer ,ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0 ) {
+            if ( iz[i_point] >= nghost_z1 && iz[i_point] < nz-nghost_z2
+              && ix[i_point] >= nghost_x1 && ix[i_point] < nx-nghost_x2 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 rho_z[index] = cal_ari_averaging(loc_type[i_point], rho01[index-1], rho01[index], rho01[index+nx-1],
                                                  rho01[index+nx], area1[i_point], area2[i_point]);
@@ -252,7 +278,6 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
         }
 
     }
-
 
     free(ix);
     free(iz);
@@ -264,14 +289,15 @@ int media_parameterization_vol(struct interfaces *interface, int number_of_inter
 }
 
 int media_parameterization_tti(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *xvec, float *zvec,
+        float dx, float dz, int nx, int nz, float *xvec1, float *zvec1, float *xvec2, float *zvec2,
         float *LAM, float *MU, float *RHO, float *L2M,
         float *lam2mu00, float *lam2mu11, float *lam00, float *lam11, float *mu00, float *mu11, float *rho01, float *rho10,
         float *c11_1, float *c13_1, float *c15_1, float *c33_1, float *c35_1, float *c55_1,
         float *c11_2, float *c13_2, float *c15_2, float *c33_2, float *c35_2, float *c55_2,
-        float *rho_x, float *rho_z)
+        float *rho_x, float *rho_z,
+        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
-    int   *ix = NULL, *iz = NULL, *loc_type = NULL;
+    int   *ix = NULL, *iz = NULL, *loc_type = NULL;  //ix, iz there is the layer of grid
     float *area1 = NULL, *area2 = NULL, *theta = NULL;
     float xvec_h[nx], zvec_h[nz];  // xvec-dx/2, zvec-dz/2.
     int   ix_h, iz_h, npoints_layer, i_point, index, ierr, i_interface;
@@ -279,9 +305,9 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
     int i,j;
 
     for (ix_h = 0; ix_h < nx; ix_h++)
-        xvec_h[ix_h] = xvec[ix_h] - dx/2;
+        xvec_h[ix_h] = xvec1[ix_h] - dx/2;
     for (iz_h = 0; iz_h < nz; iz_h++)
-        zvec_h[iz_h] = zvec[iz_h] - dz/2;
+        zvec_h[iz_h] = zvec1[iz_h] - dz/2;
 
     ix       = (int*)malloc(MAX_LAYER_POINTS*sizeof(int));
     iz       = (int*)malloc(MAX_LAYER_POINTS*sizeof(int));
@@ -300,32 +326,50 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
 
     /* assginment all the grid */
     /* mu, lam*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, MU , mu00);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, LAM, lam00);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, L2M, lam2mu00);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, L2M, c11_1);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, L2M, c33_1);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, LAM, c13_1);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin, dx, dz, nx, nz, MU , c55_2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, MU , mu00, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, LAM, lam00, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, L2M, lam2mu00, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, L2M, c11_1, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, L2M, c33_1, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, LAM, c13_1, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec1[0], dx, dz,
+            nx, nz, MU , c55_2, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
     memset(c15_1, 0.0, nx*nz*sizeof(float));
     memset(c35_1, 0.0, nx*nz*sizeof(float));
 
     /*rho_x*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin, dx, dz, nx, nz, RHO, rho_x);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin, dx, dz, nx, nz, RHO, rho01);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec1[0], dx, dz,
+            nx, nz, RHO, rho_x, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec1[0], dx, dz,
+            nx, nz, RHO, rho01, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*rho_z*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin+dz/2, dx, dz, nx, nz, RHO, rho_z);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin, zmin+dz/2, dx, dz, nx, nz, RHO, rho10);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec2[0], dx, dz,
+            nx, nz, RHO, rho_z, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec1[0], zvec2[0], dx, dz,
+            nx, nz, RHO, rho10, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
 
     /*muxz*/
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, MU , mu11);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, LAM, lam11);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, L2M, lam2mu11);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, L2M, c11_2);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, L2M, c33_2);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, LAM, c13_2);
-    ierr = parameter_assignment(interface, number_of_interfaces, xmin+dx/2, zmin+dz/2, dx, dz, nx, nz, MU , c55_1);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, MU , mu11, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, LAM, lam11, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, L2M, lam2mu11, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, L2M, c11_2, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, L2M, c33_2, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, LAM, c13_2, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = parameter_assignment(interface, number_of_interfaces, xvec2[0], zvec2[0], dx, dz,
+            nx, nz, MU , c55_1, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
     memset(c15_2, 0.0, nx*nz*sizeof(float));
     memset(c35_2, 0.0, nx*nz*sizeof(float));
 
@@ -340,7 +384,8 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
             &npoints_layer,ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0) {
+            if ( iz[i_point] > nghost_z1 && iz[i_point] < nz-nghost_z2-1
+              && ix[i_point] > nghost_x1 && ix[i_point] < nx-nghost_x2-1 && loc_type[i_point] != 0 ) {
 
                 index = iz[i_point]*nx+ix[i_point];
 
@@ -386,12 +431,13 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
         }
 
         /*-- For sigma_xz: muxz , center of the volum is 11 --*/
-        cal_dip_area(xvec, zvec, dx, dz, nx, nz,
+        cal_dip_area(xvec1, zvec1, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer, ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0) {
+            if ( iz[i_point] > nghost_z1 && iz[i_point] < nz-nghost_z2-1
+              && ix[i_point] > nghost_x1 && ix[i_point] < nx-nghost_x2-1 && loc_type[i_point] != 0 ) {
 
                 index = iz[i_point]*nx+ix[i_point];
 
@@ -436,12 +482,13 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
         }
 
         /*-- For v_x: rho_x , center of the volum is 01 --*/
-        cal_dip_area(xvec, zvec_h, dx, dz, nx, nz,
+        cal_dip_area(xvec1, zvec_h, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer, ix, iz, loc_type, area1, area2, theta);
 
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0) {
+            if ( iz[i_point] > nghost_z1 && iz[i_point] < nz-nghost_z2-1
+              && ix[i_point] > nghost_x1 && ix[i_point] < nx-nghost_x2-1 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 rho_x[index] = cal_ari_averaging(loc_type[i_point], rho10[index-nx], rho10[index-nx+1], rho10[index],
                                                  rho10[index+1], area1[i_point], area2[i_point]);
@@ -449,11 +496,12 @@ int media_parameterization_tti(struct interfaces *interface, int number_of_inter
         }
 
         /*-- For v_z: rho_z , center of the volum is 10 --*/
-        cal_dip_area(xvec_h, zvec, dx, dz, nx, nz,
+        cal_dip_area(xvec_h, zvec1, dx, dz, nx, nz,
             interface[i_interface].x_loc, interface[i_interface].z_loc, interface[i_interface].npoints_interfaces,
             &npoints_layer ,ix, iz, loc_type, area1, area2, theta);
         for (i_point = 0; i_point < npoints_layer; i_point++) {
-            if ( iz[i_point] > 0 && iz[i_point] < nz-1 && ix[i_point] > 0 && ix[i_point] < nx-1 && loc_type[i_point] != 0) {
+            if ( iz[i_point] > nghost_z1 && iz[i_point] < nz-nghost_z2-1
+              && ix[i_point] > nghost_x1 && ix[i_point] < nx-nghost_x2-1 && loc_type[i_point] != 0 ) {
                 index = iz[i_point]*nx+ix[i_point];
                 rho_z[index] = cal_ari_averaging(loc_type[i_point], rho01[index-1], rho01[index], rho01[index+nx-1],
                                                  rho01[index+nx], area1[i_point], area2[i_point]);

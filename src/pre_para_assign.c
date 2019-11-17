@@ -14,7 +14,8 @@
  *
  * History:
  *     12/2018: Original version created by Luqian Jiang
- *
+ *     11/2019: Luqian Jiang:
+ *         change the check_assignment function for combining with modeling
  *
  ************************************************************************/
 #include "pre_interface_struct.h"
@@ -81,10 +82,11 @@ void Polygon_Fill(int IMAGE_BOT, int IMAGE_TOP, int IMAGE_LEFT, int IMAGE_RIGHT,
 
 /* assignment the multi-layer model with a set of values */
 int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *value, float *data)
+        float xmin, float zmin, float dx, float dz, int nx, int nz, float *value, float *data,
+        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
     float *interface_x_index = NULL, *interface_z_index = NULL;
-    int i_interface, i_point, ierr;
+    int i_interface, i_point, ierr = 0;
 
     for (i_interface = 0; i_interface < number_of_interfaces; i_interface++) {
 
@@ -105,7 +107,8 @@ int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
         free(interface_z_index);
     }
 
-    ierr = check_assignment(data, nz, nx);
+    ierr = check_assignment(data, nz, nx, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+
     if (ierr == 0)
         return 0;
     else
@@ -113,14 +116,15 @@ int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
 }
 
 /* check if all grid points are assigned */
-int check_assignment(float *data, int col, int row)
+int check_assignment(float *data, int nz, int nx,
+     int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
 {
-    int icol, irow;
-    for (icol = 0; icol < col; icol++) {
-        for (irow = 0; irow < row; irow++) {
-            if (data[row*icol + irow] <= 0.0) {
-                printf("Assignment error: row %d column %d has the wrong value, please check the interface file!\n",icol,irow);
-                //return 1;
+    int iz, ix;
+    for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
+        for (ix = nghost_x1; ix < nx-nghost_x2; ix++) {
+            if (data[nx*iz + ix] <= 0.0) {
+                printf("Assignment error: row %d column %d has the wrong value, please check the interface file!\n",iz,ix);
+                return 1;
             }
         }
     }

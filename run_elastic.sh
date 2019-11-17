@@ -13,7 +13,7 @@ rm -rf OUTPUT/*
 #stores setup
 cp DATA/Par_file OUTPUT/
 
-./bin/Lebedev_tti
+./bin/FD2D_modeling 
 
 #store output
 cp DATA/*STATIONS* OUTPUT

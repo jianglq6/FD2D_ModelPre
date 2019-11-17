@@ -4,6 +4,7 @@
 
 #define ALPHA 0.025
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
+
 #define BOUNDARY_TYPE_EXPONENT 1
 
 int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
@@ -27,3 +28,11 @@ int abs_exp_z2(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_s
                int boundary_layer_number, float *U);
 
 float cal_exp(int i);
+
+int abs_exp_velocity_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
+                         int *boundary_type, int *boundary_layer_number,
+                         float *Vx, float *Vz);
+
+int abs_exp_stresses_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
+                     int *boundary_type, int *boundary_layer_number,
+                     float *Txx, float *Tzz, float *Txz);

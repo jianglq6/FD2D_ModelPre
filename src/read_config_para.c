@@ -289,7 +289,8 @@ void read_value_string(FILE *fid, char *para_name, char *value_to_read, int *ier
 
     memset(value_to_read, 0, strlen(value_to_read));
     strncpy(value_to_read, string_read, strlen(string_read));
-    trim(string_read);
+    value_to_read[strlen(string_read)] = '\0';
+    //trim(string_read);
 
     return;
 }

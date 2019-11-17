@@ -6,4 +6,4 @@
 double ssg_coef(int o, int n);
 double *DirectLU(double *u, int n);
 
-float esgfd_coef(int o, int n);
+double esgfd_coef(int o, int n);
