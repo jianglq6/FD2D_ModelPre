@@ -12,10 +12,13 @@
  *
  ***************************************************************************/
 
+#include "utility_vector.h"
 #include "elastic2d_src.h"
 #include "elastic2d_stf.h"
 #include "elastic2d_staggered.h"
 #include "staggered_fd_coef.h"
+#include "elastic2d_abs_exp.h"
+#include "elastic2d_abs_npml.h"
 #include "write_snapshots.h"
 #include "write_seismograms.h"
 
@@ -25,11 +28,13 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
                     float *c11, float *c13, float *c33, float *c55,
                     float *B01, float *B10,
                     struct Src src, int source_impulse_method,
-                    int *boundary_type, int *boundary_layer_number,
+                    int abs_type, int *boundary_layer_number,
                     float *Txx, float *Txz, float *Tzz,
                     float *Vx, float *Vz,
                     float *hTxx, float *hTxz, float *hTzz,
                     float *hVx, float *hVz,
+                    float *DxVx00, float *DzVz00, float *DzVx11, float *DxVz11,
+                    float *DxTxx01,float *DzTxz01,float *DxTxz10,float *DzTzz10,
                     int seismotype, int nreceivers, float *xr, float *zr,
                     int NSTEP_BETWEEN_OUTPUT_SEISMOS,
                     bool save_ASCII_seismograms, bool save_binary_seismograms,
@@ -44,13 +49,80 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
     int ni1, ni2, nk1, nk2, it, i, ierr, is;
     double *fdx = NULL, *fdz = NULL;
     float current_time;
+    float *Ax_regu = NULL, *Bx_regu = NULL, *Dx_regu = NULL;
+    float *Az_regu = NULL, *Bz_regu = NULL, *Dz_regu = NULL;
+    float *Ax_half = NULL, *Bx_half = NULL, *Dx_half = NULL;
+    float *Az_half = NULL, *Bz_half = NULL, *Dz_half = NULL;
+    float *Txx_x1 = NULL, *Txz_x1 = NULL, *Vx_x1 = NULL, *Vz_x1 = NULL;  //x1-left
+    float *Txx_x2 = NULL, *Txz_x2 = NULL, *Vx_x2 = NULL, *Vz_x2 = NULL;  //x2-right
+    float *Tzz_z1 = NULL, *Txz_z1 = NULL, *Vx_z1 = NULL, *Vz_z1 = NULL;  //z1-top
+    float *Tzz_z2 = NULL, *Txz_z2 = NULL, *Vx_z2 = NULL, *Vz_z2 = NULL;  //z2-bottom
+    float *fc_pml;
 
+    /* calculation area */
     ni1 = half_fd_stencil;
     ni2 = nx - half_fd_stencil;
     nk1 = half_fd_stencil;
     nk2 = nz - half_fd_stencil;
-    printf("stencil:%d, ni1: %d, ni2: %d, nk1: %d, nk2: %d. \n",
-      half_fd_stencil, ni1, ni2, nk1, nk2);
+
+    /* prepare for ade cfs-pml */
+    if (abs_type == ABS_NPML) {
+
+        Ax_regu = creat_float_array(nx, 0.0);
+        Bx_regu = creat_float_array(nx, 1.0);
+        Dx_regu = creat_float_array(nx, 0.0);
+        Ax_half = creat_float_array(nx, 0.0);
+        Bx_half = creat_float_array(nx, 1.0);
+        Dx_half = creat_float_array(nx, 0.0);
+
+        Az_regu = creat_float_array(nz, 0.0);
+        Bz_regu = creat_float_array(nz, 1.0);
+        Dz_regu = creat_float_array(nz, 0.0);
+        Az_half = creat_float_array(nz, 0.0);
+        Bz_half = creat_float_array(nz, 1.0);
+        Dz_half = creat_float_array(nz, 0.0);
+
+        if (boundary_layer_number[0] > 0) {
+            Txx_x1 = creat_float_array(boundary_layer_number[0]*nz, 0.0);
+            Txz_x1 = creat_float_array(boundary_layer_number[0]*nz, 0.0);
+             Vx_x1 = creat_float_array(boundary_layer_number[0]*nz, 0.0);
+             Vz_x1 = creat_float_array(boundary_layer_number[0]*nz, 0.0);
+        }
+
+        if (boundary_layer_number[1] > 0) {
+            Txx_x2 = creat_float_array(boundary_layer_number[1]*nz, 0.0);
+            Txz_x2 = creat_float_array(boundary_layer_number[1]*nz, 0.0);
+             Vx_x2 = creat_float_array(boundary_layer_number[1]*nz, 0.0);
+             Vz_x2 = creat_float_array(boundary_layer_number[1]*nz, 0.0);
+        }
+
+        if (boundary_layer_number[2] > 0) {
+            Tzz_z1 = creat_float_array(boundary_layer_number[2]*nx, 0.0);
+            Txz_z1 = creat_float_array(boundary_layer_number[2]*nx, 0.0);
+             Vx_z1 = creat_float_array(boundary_layer_number[2]*nx, 0.0);
+             Vz_z1 = creat_float_array(boundary_layer_number[2]*nx, 0.0);
+        }
+
+        if (boundary_layer_number[3] > 0) {
+            Tzz_z2 = creat_float_array(boundary_layer_number[3]*nx, 0.0);
+            Txz_z2 = creat_float_array(boundary_layer_number[3]*nx, 0.0);
+             Vx_z2 = creat_float_array(boundary_layer_number[3]*nx, 0.0);
+             Vz_z2 = creat_float_array(boundary_layer_number[3]*nx, 0.0);
+        }
+
+        ierr = abs_npml_init(boundary_layer_number,
+                         src.stf_freqfactor[0], c11, c55, B01,
+                         half_fd_stencil,
+                         Ax_regu, Bx_regu, Dx_regu,
+                         Ax_half, Bx_half, Dx_half,
+                         Az_regu, Bz_regu, Dz_regu,
+                         Az_half, Bz_half, Dz_half,
+                         xvec1, xvec2, zvec1, zvec2,
+                         ni1, ni2, nk1, nk2, nx, dx, dz);
+    }
+
+
+
 
     // TODO: Check Stability !
 
@@ -98,7 +170,24 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
         /* RHS of equation of the motion */
         ierr = cal_momentum_ssg(fdx, fdz, half_fd_stencil,
                             ni1, ni2, nk1, nk2, nx,
-                            hVx, hVz, Txx, Txz, Tzz);
+                            hVx, hVz, Txx, Txz, Tzz,
+                            DxTxx01, DzTxz01, DxTxz10, DzTzz10);
+
+        /* Absorbing boundary condition */
+        if (abs_type == ABS_NPML) {
+            ierr = abs_npml_velocity_staggered(ni1, ni2, nk1, nk2, nx, nz,
+                           boundary_layer_number, dt,
+                           hVx, hVz,
+                           Ax_regu, Bx_regu, Dx_regu,
+                           Ax_half, Bx_half, Dx_half,
+                           Az_regu, Bz_regu, Dz_regu,
+                           Az_half, Bz_half, Dz_half,
+                           Txx_x1, Txx_x2,
+                           Tzz_z1, Tzz_z2,
+                           Txz_x1, Txz_x2,
+                           Txz_z1, Txz_z2,
+                           DxTxx01, DzTxz01, DxTxz10, DzTzz10);
+        }
 
         /* Force source */
         ierr =  src_force_ssg(hVx, hVz,
@@ -112,9 +201,11 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
         ierr = update_velocity_ssg(nx, nz, dt, Vx, Vz, hVx, hVz, B10, B01);
 
         /* Absorbing boundary condition */
-        ierr = abs_exp_velocity_ssg(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
-                            boundary_type, boundary_layer_number,
+        if (abs_type == ABS_EXPONENT) {
+            ierr = abs_exp_velocity_ssg(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
+                            boundary_layer_number,
                             Vx, Vz);
+        }
 
         /*------------------------------------------------------*/
         /* update stress (Hoke law)                             */
@@ -125,7 +216,22 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
         /* RHS of Hook law euqation (stress-strain equation) */
         ierr = cal_hook_ssg(fdx, fdz, half_fd_stencil, ni1, ni2, nk1, nk2, nx,
                         hTxx, hTzz, hTxz, Vx , Vz,
-                        c11, c13, c33, c55);
+                        c11, c13, c33, c55,
+                        DxVx00, DzVz00, DxVz11, DzVx11);
+
+       if (abs_type == ABS_NPML) {
+            ierr = abs_npml_stress_staggered(ni1, ni2, nk1, nk2, nx, nz,
+                        boundary_layer_number, dt,
+                        hTxx, hTxz, hTzz,
+                        DxVx00, DzVz00, DzVx11, DxVz11,
+                        c11, c13, c33, c55,
+                        Ax_regu, Bx_regu, Dx_regu,
+                        Ax_half, Bx_half, Dx_half,
+                        Az_regu, Bz_regu, Dz_regu,
+                        Az_half, Bz_half, Dz_half,
+                        Vx_x1, Vx_x2, Vx_z1, Vx_z2,
+                        Vz_x1, Vz_x2, Vz_z1, Vz_z2);
+        }
 
         /* Moment source */
         ierr = src_moment_ssg(hTxx, hTxz, hTzz,
@@ -133,13 +239,17 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
                              source_impulse_method, src, current_time, dt,
                              dx, dz, nx);
 
+
+
         /* update stress */
         ierr = update_stress_ssg(nx, nz, dt, Txx, Tzz, Txz, hTxx, hTzz, hTxz);
 
         /* Absorbing boundary condition */
-        ierr = abs_exp_stresses_ssg(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
-                        boundary_type, boundary_layer_number,
+        if (abs_type == ABS_EXPONENT) {
+            ierr = abs_exp_stresses_ssg(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
+                        boundary_layer_number,
                         Txx, Tzz, Txz);
+        }
 
         /* receiver and snapshot */
         ierr = write_seismograms_ssg(Vx, Vz,
@@ -172,7 +282,20 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
     fprintf(stdout, "DONE \n");
 
     free(fdx); free(fdz);
-
+    free_float_array(Ax_regu); free_float_array(Az_regu);
+    free_float_array(Dx_regu); free_float_array(Dz_regu);
+    free_float_array(Bx_regu); free_float_array(Bz_regu);
+    free_float_array(Ax_half); free_float_array(Az_half);
+    free_float_array(Dx_half); free_float_array(Dz_half);
+    free_float_array(Bx_half); free_float_array(Bz_half);
+    free_float_array(Txx_x1); free_float_array(Txz_x1);
+    free_float_array(Txx_x2); free_float_array(Txz_x2);
+    free_float_array(Tzz_z1); free_float_array(Txz_z1);
+    free_float_array(Tzz_z2); free_float_array(Txz_z2);
+    free_float_array(Vx_x1); free_float_array(Vz_x1);
+    free_float_array(Vx_x2); free_float_array(Vz_x2);
+    free_float_array(Vx_z1); free_float_array(Vz_z1);
+    free_float_array(Vx_z2); free_float_array(Vz_z2);
 
     return 0;
 }
@@ -181,10 +304,11 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
 /* RHS of equation of motion */
 int cal_momentum_ssg(double *fdx, double *fdz, int half_fd_stencil,
                  int ni1, int ni2, int nk1, int nk2, int nx,
-                 float *hVx, float *hVz, float *Txx, float *Txz, float *Tzz)
+                 float *hVx, float *hVz, float *Txx, float *Txz, float *Tzz,
+                 float *DxTxx01, float *DzTxz01, float *DxTxz10, float *DzTzz10)
 {
     int ix, iz, i_diff, indx;
-    float Txx_x01, Txz_z01, Txz_x10, Tzz_z10;
+//    float DxTxx01[indx], DzTxz01[indx], DxTxz10[indx], DzTzz10[indx];
 
     for (iz = nk1; iz < nk2; iz++) {
         for (ix = ni1; ix < ni2; ix++) {
@@ -193,16 +317,17 @@ int cal_momentum_ssg(double *fdx, double *fdz, int half_fd_stencil,
 
             /*-- for the 1st set of grids --*/
             /* Vx-01 Vz-10 */
-            Txx_x01 = 0.0; Txz_z01 = 0.0; Txz_x10 = 0.0; Tzz_z10 = 0.0;
+            DxTxx01[indx] = 0.0; DzTxz01[indx] = 0.0;
+            DxTxz10[indx] = 0.0; DzTzz10[indx] = 0.0;
             for (i_diff = 1; i_diff <= half_fd_stencil; i_diff++) {
-                Txx_x01 += Dx01(Txx,fdx,i_diff,ix,iz,nx);
-                Txz_z01 += Dz01(Txz,fdz,i_diff,ix,iz,nx);
-                Txz_x10 += Dx10(Txz,fdx,i_diff,ix,iz,nx);
-                Tzz_z10 += Dz10(Tzz,fdz,i_diff,ix,iz,nx);
+                DxTxx01[indx] += Dx01(Txx,fdx,i_diff,ix,iz,nx);
+                DzTxz01[indx] += Dz01(Txz,fdz,i_diff,ix,iz,nx);
+                DxTxz10[indx] += Dx10(Txz,fdx,i_diff,ix,iz,nx);
+                DzTzz10[indx] += Dz10(Tzz,fdz,i_diff,ix,iz,nx);
             }
 
-            hVx[indx] = Txx_x01 + Txz_z01;
-            hVz[indx] = Txz_x10 + Tzz_z10;
+            hVx[indx] = DxTxx01[indx] + DzTxz01[indx];
+            hVz[indx] = DxTxz10[indx] + DzTzz10[indx];
 
         }
     }
@@ -213,32 +338,33 @@ int cal_momentum_ssg(double *fdx, double *fdz, int half_fd_stencil,
 /* RHS of stress-strain equation (Hook law) */
 int cal_hook_ssg(double *fdx, double *fdz, int half_fd_stencil, int ni1, int ni2, int nk1, int nk2, int nx,
              float *hTxx, float *hTzz, float *hTxz, float *Vx , float *Vz,
-             float *c11 , float *c13 , float *c33 , float *c55)
+             float *c11 , float *c13 , float *c33 , float *c55,
+             float *DxVx00, float *DzVz00, float *DxVz11, float *DzVx11)
 {
     int ix, iz, i_diff, indx;
-    float Vx_x00, Vz_z00; /* partial difference centered of (i,j) */
-    float Vx_z11, Vz_x11; /* partial difference centered of (i+1/2,j+1/2) */
+//    float DxVx00, DzVz00; /* partial difference centered of (i,j) */
+//    float DzVx11, DxVz11; /* partial difference centered of (i+1/2,j+1/2) */
 
     for (iz = nk1; iz < nk2; iz++) {
         for (ix = ni1; ix < ni2; ix++) {
 
             indx = iz*nx + ix;
 
-            Vx_x00 = 0.0; Vz_z00 = 0.0;
-            Vx_z11 = 0.0; Vz_x11 = 0.0;
+            DxVx00[indx] = 0.0; DzVz00[indx] = 0.0;
+            DzVx11[indx] = 0.0; DxVz11[indx] = 0.0;
             /*-- for the 1st set of grids --*/
             for (i_diff = 1; i_diff <= half_fd_stencil; i_diff++) {
 
-                Vx_x00 += Dx00(Vx, fdx, i_diff, ix, iz, nx);
-                Vz_z00 += Dz00(Vz, fdz, i_diff, ix, iz, nx);
-                Vx_z11 += Dz11(Vx, fdz, i_diff, ix, iz, nx);
-                Vz_x11 += Dx11(Vz, fdx, i_diff, ix, iz, nx);
+                DxVx00[indx] += Dx00(Vx, fdx, i_diff, ix, iz, nx);
+                DzVz00[indx] += Dz00(Vz, fdz, i_diff, ix, iz, nx);
+                DzVx11[indx] += Dz11(Vx, fdz, i_diff, ix, iz, nx);
+                DxVz11[indx] += Dx11(Vz, fdx, i_diff, ix, iz, nx);
 
             }
 
-            hTxx[indx] = c11[indx] * Vx_x00 + c13[indx] * Vz_z00;
-            hTzz[indx] = c13[indx] * Vx_x00 + c33[indx] * Vz_z00;
-            hTxz[indx] = c55[indx] * Vx_z11 + c55[indx] * Vz_x11;
+            hTxx[indx] = c11[indx] * DxVx00[indx] + c13[indx] * DzVz00[indx];
+            hTzz[indx] = c13[indx] * DxVx00[indx] + c33[indx] * DzVz00[indx];
+            hTxz[indx] = c55[indx] * DzVx11[indx] + c55[indx] * DxVz11[indx];
 
         }
     }

@@ -137,16 +137,17 @@ void cal_dip_area(float *xvec, float *zvec, float dx, float dz, int nx, int nz,
         /* Return the index of the upper left point */
 
         // Check if the interpolation is right!
-        if (abs(ix1-ix2) > 1 || abs(iz1-iz2) > 1 && iz1 ) {
-            printf("layer_of_grid is incorrect! Please check out!\n");
-            printf("ix1: %d, ix2: %d, iz1: %d, iz2: %d, layer_of_grid_x[%d]: (%f %f), layer_of_grid_z[%d]: (%f %f)\n",
+        if (ix1 >= 0 && ix1 < nx && iz1 >= 0 && iz1 < nz && ix2 >= 0 && ix2 < nx && iz2 >= 0 && iz2 < nz) {
+            if (abs(ix1-ix2) > 1 || abs(iz1-iz2) > 1 ) {
+                printf("layer_of_grid is incorrect! Please check out!\n");
+                printf("ix1: %d, ix2: %d, iz1: %d, iz2: %d, layer_of_grid[%d]: (%f %f), layer_of_grid[%d]: (%f %f)\n",
                     ix1,ix2,iz1,iz2,i_point,layer_of_grid_x[i_point],layer_of_grid_z[i_point], i_point+1, layer_of_grid_x[i_point+1], layer_of_grid_z[i_point+1]);
-            //return;
+            }
+//            return;
         }
 
         ix_para = (ix1 <= ix2) ? ix1 : ix2;
         iz_para = (iz1 <= iz2) ? iz1 : iz2;
-
 
         theta_para = atan2( (layer_of_grid_z[i_point+1] - layer_of_grid_z[i_point]),
                             (layer_of_grid_x[i_point+1] - layer_of_grid_x[i_point]) );
@@ -261,8 +262,8 @@ void cal_dip_area(float *xvec, float *zvec, float dx, float dz, int nx, int nz,
             i_point_para ++;
         }
 
-        //if (loc_type_para != 0)
-            //fprintf(fp, "%f     %f     %d     %f   %f     %d  %d \n  ",layer_of_grid_x[i_point],layer_of_grid_z[i_point], loc_type_para, area1_para, area2_para, ix_para, iz_para );
+//        if (loc_type_para != 0)
+//            fprintf(fp, "%f     %f     %d     %f   %f     %d  %d \n  ",layer_of_grid_x[i_point],layer_of_grid_z[i_point], loc_type_para, area1_para, area2_para, ix_para, iz_para );
 
 
     }

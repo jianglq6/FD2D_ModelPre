@@ -1,11 +1,11 @@
+
+#include "utility_vector.h"
 #include "elastic2d_src.h"
 #include "elastic2d_lebedev.h"
 #include "elastic2d_staggered.h"
 #include "share_param.h"
 #include "read_config_para.h"
 #include "pre_model_prepare.h"
-
-float *creat_array(int n, float v);
 
 int main()
 {
@@ -47,7 +47,7 @@ int main()
     float *xr=NULL, *zr=NULL;
 
 /*======================== boundary conditions ========================*/
-    int boundary_type[4], boundary_layer_number[4], ib;
+    int boundary_type, boundary_layer_number[4], ib;
 
 /*=====================  velocity and density model ===================*/
     bool use_existing_model;
@@ -75,10 +75,14 @@ int main()
     float sizemax_arrows=1.0;
 
 /*======================== alloc for Lebedev =========================*/
-    float *Txx_1=NULL, *Txx_2=NULL, *Tzz_1=NULL, *Tzz_2=NULL, *Txz_1=NULL, *Txz_2=NULL;
-    float *Vx_1=NULL,  *Vx_2=NULL,  *Vz_1=NULL,  *Vz_2=NULL;
-    float *hTxx_1=NULL, *hTxx_2=NULL, *hTzz_1=NULL, *hTzz_2=NULL, *hTxz_1=NULL, *hTxz_2=NULL;
-    float *hVx_1=NULL,  *hVx_2=NULL,  *hVz_1=NULL,  *hVz_2=NULL;
+    float *Txx00=NULL, *Txx11=NULL, *Tzz00=NULL, *Tzz11=NULL, *Txz11=NULL, *Txz00=NULL;
+    float *Vx01=NULL,  *Vx10=NULL,  *Vz10=NULL,  *Vz01=NULL;
+    float *hTxx00=NULL, *hTxx11=NULL, *hTzz00=NULL, *hTzz11=NULL, *hTxz11=NULL, *hTxz00=NULL;
+    float *hVx01=NULL,  *hVx10=NULL,  *hVz10=NULL,  *hVz01=NULL;
+    float *DxTxx01=NULL, *DzTxz01=NULL, *DxTxz01=NULL, *DzTzz01=NULL;
+    float *DxTxx10=NULL, *DzTxz10=NULL, *DxTxz10=NULL, *DzTzz10=NULL;
+    float *DxVx00=NULL, *DzVz00=NULL, *DzVx00=NULL, *DxVz00=NULL; /* partial difference centered of (i,j) */
+    float *DxVx11=NULL, *DzVz11=NULL, *DzVx11=NULL, *DxVz11=NULL; /* partial difference centered of (i+1/2,j+1/2) */
 
 /*===================== get the info and print =======================*/
     ierr = get_config_info(config_file, &nt, &dt,
@@ -88,7 +92,7 @@ int main()
                            &seismotype, &NSTEP_BETWEEN_OUTPUT_SEISMOS,
                            &save_ASCII_seismograms, &save_binary_seismograms,
                            &nreceivers, &xr, &zr,
-                            boundary_type, boundary_layer_number,
+                           &boundary_type, boundary_layer_number,
                            &use_existing_model, &nbmodels,
                            materialfile, interfacesfile, &save_model,
                            &effective_para_method,
@@ -101,11 +105,6 @@ int main()
 
 
 /*================== Initialize material array =======================*/
-    /* prepare for boundary condition, TODO (free surface) */
-    for (ib = 0; ib < 4; ib++){
-        if (boundary_type[ib] == 0)
-            boundary_layer_number[ib] = 0;
-    }
 
     nghost_x1 = boundary_layer_number[0] + half_fd_stencil;
     nghost_x2 = boundary_layer_number[1] + half_fd_stencil;
@@ -129,33 +128,33 @@ int main()
     xvec2 = (float*) malloc(nx_all*sizeof(float));
 
     /* alloc the material array */
-    c11_1 = creat_array(nx_all*nz_all, -1.0);
-    c13_1 = creat_array(nx_all*nz_all, -1.0);
-    c15_1 = creat_array(nx_all*nz_all,  0.0);
-    c33_1 = creat_array(nx_all*nz_all, -1.0);
-    c35_1 = creat_array(nx_all*nz_all,  0.0);
-    c55_1 = creat_array(nx_all*nz_all, -1.0);
+    c11_1 = creat_float_array(nx_all*nz_all, -1.0);
+    c13_1 = creat_float_array(nx_all*nz_all, -1.0);
+    c15_1 = creat_float_array(nx_all*nz_all,  0.0);
+    c33_1 = creat_float_array(nx_all*nz_all, -1.0);
+    c35_1 = creat_float_array(nx_all*nz_all,  0.0);
+    c55_1 = creat_float_array(nx_all*nz_all, -1.0);
 
-    c11_2 = creat_array(nx_all*nz_all, -1.0);
-    c13_2 = creat_array(nx_all*nz_all, -1.0);
-    c15_2 = creat_array(nx_all*nz_all,  0.0);
-    c33_2 = creat_array(nx_all*nz_all, -1.0);
-    c35_2 = creat_array(nx_all*nz_all,  0.0);
-    c55_2 = creat_array(nx_all*nz_all, -1.0);
+    c11_2 = creat_float_array(nx_all*nz_all, -1.0);
+    c13_2 = creat_float_array(nx_all*nz_all, -1.0);
+    c15_2 = creat_float_array(nx_all*nz_all,  0.0);
+    c33_2 = creat_float_array(nx_all*nz_all, -1.0);
+    c35_2 = creat_float_array(nx_all*nz_all,  0.0);
+    c55_2 = creat_float_array(nx_all*nz_all, -1.0);
 
-    B10   = creat_array(nx_all*nz_all, 1.0);
-    B01   = creat_array(nx_all*nz_all, 1.0);
+    B10   = creat_float_array(nx_all*nz_all, 1.0);
+    B01   = creat_float_array(nx_all*nz_all, 1.0);
 
-    lam2mu00 = creat_array(nx_all*nz_all, -1.0);
-    lam2mu11 = creat_array(nx_all*nz_all, -1.0);
-    lam11    = creat_array(nx_all*nz_all, -1.0);
-    lam00    = creat_array(nx_all*nz_all, -1.0);
-    mu00     = creat_array(nx_all*nz_all, -1.0);
-    mu11     = creat_array(nx_all*nz_all, -1.0);
-    rho_x    = creat_array(nx_all*nz_all, -1.0);
-    rho_z    = creat_array(nx_all*nz_all, -1.0);
-    rho01    = creat_array(nx_all*nz_all, -1.0);
-    rho10    = creat_array(nx_all*nz_all, -1.0);
+    lam2mu00 = creat_float_array(nx_all*nz_all, -1.0);
+    lam2mu11 = creat_float_array(nx_all*nz_all, -1.0);
+    lam11    = creat_float_array(nx_all*nz_all, -1.0);
+    lam00    = creat_float_array(nx_all*nz_all, -1.0);
+    mu00     = creat_float_array(nx_all*nz_all, -1.0);
+    mu11     = creat_float_array(nx_all*nz_all, -1.0);
+    rho_x    = creat_float_array(nx_all*nz_all, -1.0);
+    rho_z    = creat_float_array(nx_all*nz_all, -1.0);
+    rho01    = creat_float_array(nx_all*nz_all, -1.0);
+    rho10    = creat_float_array(nx_all*nz_all, -1.0);
 
     /* Grid vectors, xvec2, zvec2 are half grid */
     for (ix=0; ix<nx_all; ix++) {
@@ -168,11 +167,11 @@ int main()
         zvec2[iz] = zmin_all+dz/2 + dz*iz;
     }
 
+
 /*=========== Model prepare: effective media parameterization =========*/
     if (!use_existing_model) {
         ierr = model_prepare(nbmodels, materialfile, interfacesfile,
                 effective_para_method, save_model, &prepared_media,
-                nghost_x1, nghost_x2, nghost_z1, nghost_z2,
                 xvec1, zvec1, xvec2, zvec2, nx_all, nz_all, dx, dz,
                 c11_1, c13_1, c15_1, c33_1, c35_1, c55_1,
                 c11_2, c13_2, c15_2, c33_2, c35_2, c55_2,
@@ -182,28 +181,48 @@ int main()
     }
 
 
-    /* alloc the components */
-    Txx_1  = creat_array(nx_all*nz_all, 0.0);
-    Txx_2  = creat_array(nx_all*nz_all, 0.0);
-    Tzz_1  = creat_array(nx_all*nz_all, 0.0);
-    Tzz_2  = creat_array(nx_all*nz_all, 0.0);
-    Txz_1  = creat_array(nx_all*nz_all, 0.0);
-    Txz_2  = creat_array(nx_all*nz_all, 0.0);
-    Vz_1   = creat_array(nx_all*nz_all, 0.0);
-    Vz_2   = creat_array(nx_all*nz_all, 0.0);
-    Vx_1   = creat_array(nx_all*nz_all, 0.0);
-    Vx_2   = creat_array(nx_all*nz_all, 0.0);
 
-    hTxx_1 = creat_array(nx_all*nz_all, 0.0);
-    hTxx_2 = creat_array(nx_all*nz_all, 0.0);
-    hTzz_1 = creat_array(nx_all*nz_all, 0.0);
-    hTzz_2 = creat_array(nx_all*nz_all, 0.0);
-    hTxz_1 = creat_array(nx_all*nz_all, 0.0);
-    hTxz_2 = creat_array(nx_all*nz_all, 0.0);
-    hVz_1  = creat_array(nx_all*nz_all, 0.0);
-    hVz_2  = creat_array(nx_all*nz_all, 0.0);
-    hVx_1  = creat_array(nx_all*nz_all, 0.0);
-    hVx_2  = creat_array(nx_all*nz_all, 0.0);
+    /* alloc the components */
+    Txx00  = creat_float_array(nx_all*nz_all, 0.0);
+    Txx11  = creat_float_array(nx_all*nz_all, 0.0);
+    Tzz00  = creat_float_array(nx_all*nz_all, 0.0);
+    Tzz11  = creat_float_array(nx_all*nz_all, 0.0);
+    Txz11  = creat_float_array(nx_all*nz_all, 0.0);
+    Txz00  = creat_float_array(nx_all*nz_all, 0.0);
+    Vz10   = creat_float_array(nx_all*nz_all, 0.0);
+    Vz01   = creat_float_array(nx_all*nz_all, 0.0);
+    Vx01   = creat_float_array(nx_all*nz_all, 0.0);
+    Vx10   = creat_float_array(nx_all*nz_all, 0.0);
+
+    hTxx00 = creat_float_array(nx_all*nz_all, 0.0);
+    hTxx11 = creat_float_array(nx_all*nz_all, 0.0);
+    hTzz00 = creat_float_array(nx_all*nz_all, 0.0);
+    hTzz11 = creat_float_array(nx_all*nz_all, 0.0);
+    hTxz11 = creat_float_array(nx_all*nz_all, 0.0);
+    hTxz00 = creat_float_array(nx_all*nz_all, 0.0);
+    hVz10  = creat_float_array(nx_all*nz_all, 0.0);
+    hVz01  = creat_float_array(nx_all*nz_all, 0.0);
+    hVx01  = creat_float_array(nx_all*nz_all, 0.0);
+    hVx10  = creat_float_array(nx_all*nz_all, 0.0);
+
+    DxVz00 = creat_float_array(nx_all*nz_all, 0.0);
+    DxVz11 = creat_float_array(nx_all*nz_all, 0.0);
+    DzVx00 = creat_float_array(nx_all*nz_all, 0.0);
+    DzVx11 = creat_float_array(nx_all*nz_all, 0.0);
+    DzVz00 = creat_float_array(nx_all*nz_all, 0.0);
+    DzVz11 = creat_float_array(nx_all*nz_all, 0.0);
+    DxVx00 = creat_float_array(nx_all*nz_all, 0.0);
+    DxVx11 = creat_float_array(nx_all*nz_all, 0.0);
+
+    DxTxx01 = creat_float_array(nx_all*nz_all, 0.0);
+    DxTxx10 = creat_float_array(nx_all*nz_all, 0.0);
+    DzTxz01 = creat_float_array(nx_all*nz_all, 0.0);
+    DzTxz10 = creat_float_array(nx_all*nz_all, 0.0);
+    DxTxz01 = creat_float_array(nx_all*nz_all, 0.0);
+    DxTxz10 = creat_float_array(nx_all*nz_all, 0.0);
+    DzTzz01 = creat_float_array(nx_all*nz_all, 0.0);
+    DzTzz10 = creat_float_array(nx_all*nz_all, 0.0);
+
 
 
 /*======================================================
@@ -216,8 +235,7 @@ int main()
                 c15_1, c35_1, c55_1,
                 c11_2, c13_2, c33_2,
                 c15_2, c35_2, c55_2,
-                B01, B10, nx_all, nz_all,
-                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                B01, B10, nx_all, nz_all);
 
         ierr = elastic2d_lebedev(dx, dz, nx_all, nz_all, nt, dt,
                 half_fd_stencil, spatial_difference_method, filter_method,
@@ -226,10 +244,14 @@ int main()
                 c11_2, c13_2, c15_2, c33_2, c35_2, c55_2,
                 B01, B10, src, source_impulse_method,
                 boundary_type, boundary_layer_number,
-                Txx_1 , Txx_2, Txz_1 , Txz_2, Tzz_1, Tzz_2,
-                Vx_1  , Vx_2 , Vz_1, Vz_2,
-                hTxx_1,hTxx_2, hTxz_1, hTxz_2, hTzz_1, hTzz_2,
-                hVx_1 , hVx_2, hVz_1 , hVz_2,
+                Txx00 , Txx11, Txz11 , Txz00, Tzz00, Tzz11,
+                Vx01  , Vx10 , Vz10, Vz01,
+                hTxx00,hTxx11, hTxz11, hTxz00, hTzz00, hTzz11,
+                hVx01 , hVx10, hVz10 , hVz01,
+                DxVx00, DzVz00, DzVx00, DxVz00,
+                DxVx11, DzVz11, DzVx11, DxVz11,
+                DxTxx01, DzTxz01, DxTxz01, DzTzz01,
+                DxTxx10, DzTxz10, DxTxz10, DzTzz10,
                 seismotype, nreceivers, xr, zr,
                 NSTEP_BETWEEN_OUTPUT_SEISMOS,
                 save_ASCII_seismograms, save_binary_seismograms,
@@ -249,10 +271,12 @@ int main()
                     c11_1, c13_1, c11_1, c55_1,
                     B01, B10, src, source_impulse_method,
                     boundary_type, boundary_layer_number,
-                    Txx_1, Txz_1, Tzz_1,
-                    Vx_1,  Vz_1,
-                    hTxx_1,hTxz_1, hTzz_1,
-                    hVx_1, hVz_1,
+                    Txx00, Txz11, Tzz00,
+                    Vx01,  Vz10,
+                    hTxx00,hTxz11, hTzz00,
+                    hVx01, hVz10,
+                    DxVx00, DzVz00, DzVx11, DxVz11,
+                    DxTxx01,DzTxz01,DxTxz10,DzTzz10,
                     seismotype, nreceivers, xr, zr,
                     NSTEP_BETWEEN_OUTPUT_SEISMOS,
                     save_ASCII_seismograms, save_binary_seismograms,
@@ -271,10 +295,12 @@ int main()
                     c11_1, c13_1, c33_1, c55_1,
                     B01, B10, src, source_impulse_method,
                     boundary_type, boundary_layer_number,
-                    Txx_1, Txz_1, Tzz_1,
-                    Vx_1,  Vz_1,
-                    hTxx_1,hTxz_1, hTzz_1,
-                    hVx_1, hVz_1,
+                    Txx00, Txz11, Tzz00,
+                    Vx01,  Vz10,
+                    hTxx00,hTxz11, hTzz00,
+                    hVx01, hVz10,
+                    DxVx00, DzVz00, DzVx11, DxVz11,
+                    DxTxx01,DzTxz01,DxTxz10,DzTzz10,
                     seismotype, nreceivers, xr, zr,
                     NSTEP_BETWEEN_OUTPUT_SEISMOS,
                     save_ASCII_seismograms, save_binary_seismograms,
@@ -293,10 +319,14 @@ int main()
     free(lam2mu00); free(lam2mu11); free(lam11); free(lam00);
     free(mu00); free(mu11); free(rho_x); free(rho_z); free(rho01); free(rho10);
     free(B01  ); free(B10  ); free(c55_1); free(c55_2);
-    free(Txx_1); free(Tzz_1); free(Txz_1); free(Vx_1); free(Vz_1);
-    free(Txx_2); free(Tzz_2); free(Txz_2); free(Vx_2); free(Vz_2);
-    free(hTxx_1); free(hTzz_1); free(hTxz_1); free(hVx_1); free(hVz_1);
-    free(hTxx_2); free(hTzz_2); free(hTxz_2); free(hVx_2); free(hVz_2);
+    free(Txx00); free(Tzz00); free(Txz11); free(Vx01); free(Vz10);
+    free(Txx11); free(Tzz11); free(Txz00); free(Vx10); free(Vz01);
+    free(hTxx00); free(hTzz00); free(hTxz11); free(hVx01); free(hVz10);
+    free(hTxx11); free(hTzz11); free(hTxz00); free(hVx10); free(hVz01);
+    free(DxTxx01); free(DzTxz01); free(DxTxz01); free(DzTzz01);
+    free(DxTxx10); free(DzTxz10); free(DxTxz10); free(DzTzz10);
+    free(DxVx00); free(DzVz00); free(DzVx00); free(DxVz00);
+    free(DxVx11); free(DzVz11); free(DzVx11); free(DxVz11);
     free(xr); free(zr);
     free(src.stf_type_id); free(src.stf_timefactor); free(src.stf_freqfactor);
     free(src.xs); free(src.zs); free(src.Fx); free(src.Fz);
@@ -305,13 +335,3 @@ int main()
 }
 
 
-float *creat_array(int n, float v)
-{
-    int i;
-    float *array;
-    array = (float*) malloc( n * sizeof(float));
-    for (i = 0; i < n; i++ ) {
-        array[i] = v;
-    }
-    return array;
-}

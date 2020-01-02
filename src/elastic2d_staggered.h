@@ -36,11 +36,13 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
                     float *c11, float *c13, float *c33, float *c55,
                     float *B01, float *B10,
                     struct Src src, int source_impulse_method,
-                    int *boundary_type, int *boundary_layer_number,
+                    int abs_type, int *boundary_layer_number,
                     float *Txx, float *Txz, float *Tzz,
                     float *Vx, float *Vz,
                     float *hTxx, float *hTxz, float *hTzz,
                     float *hVx, float *hVz,
+                    float *DxVx00, float *DzVz00, float *DzVx11, float *DxVz11,
+                    float *DxTxx01,float *DzTxz01,float *DxTxz10,float *DzTzz10,
                     int seismotype, int nreceivers, float *xr, float *zr,
                     int NSTEP_BETWEEN_OUTPUT_SEISMOS,
                     bool save_ASCII_seismograms, bool save_binary_seismograms,
@@ -55,12 +57,14 @@ int elastic2d_staggered(float dx, float dz, int nx, int nz, int nt, float dt,
 /* RHS of equation of motion */
 int cal_momentum_ssg(double *fdx, double *fdz, int half_fd_stencil,
                  int ni1, int ni2, int nk1, int nk2, int nx,
-                 float *hVx, float *hVz, float *Txx, float *Txz, float *Tzz);
+                 float *hVx, float *hVz, float *Txx, float *Txz, float *Tzz,
+                 float *DxTxx01, float *DzTxz01, float *DxTxz10, float *DzTzz10);
 
 /* RHS of stress-strain equation (Hook law) */
 int cal_hook_ssg(double *fdx, double *fdz, int half_fd_stencil, int ni1, int ni2, int nk1, int nk2, int nx,
              float *hTxx, float *hTzz, float *hTxz, float *Vx , float *Vz,
-             float *c11 , float *c13 , float *c33 , float *c55);
+             float *c11 , float *c13 , float *c33 , float *c55,
+             float *DxVx00, float *DzVz00, float *DxVz11, float *DzVx11);
 
 int update_velocity_ssg(int nx, int nz, float dt,
         float *Vx, float *Vz,

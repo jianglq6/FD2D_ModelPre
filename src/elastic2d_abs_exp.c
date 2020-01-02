@@ -1,11 +1,14 @@
 /***************************************************************************
  *
- * This function is used for the absorbing boundary condition
+ * This function is used for the absorbing outgoing waves based on
+ *   Cerjan and Kosloff's nonreflecting boundary condition
+ *   (Cerjan C., et al. (1985), Geophysics, 50(4):705-708)
+ *
  *
  * Authors: Luqian Jiang   Email: jlq0608@gmail.com
  *          Wei Zhang      Email: zhangwei@sustc.edu.cn
  *
- * Copyright (c) 2018 - 2019 zwlab
+ * Copyright (c) 2018 - 2020 zwlab
  *
  * History: 08/2019: Original version created by Luqian Jiang
  *
@@ -14,12 +17,12 @@
 #include "elastic2d_abs_exp.h"
 
 int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
-                     int *boundary_type, int *boundary_layer_number,
+                     int *boundary_layer_number,
                      float *Vx_1, float *Vx_2, float *Vz_1, float *Vz_2)
 {
     int ierr = 0;
 
-    if(boundary_type[0] == BOUNDARY_TYPE_EXPONENT) {
+    if( boundary_layer_number[0] > 0 ) {
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[0], Vx_1);
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -30,7 +33,7 @@ int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[0], Vz_2);
     }
 
-    if(boundary_type[1] == BOUNDARY_TYPE_EXPONENT) {
+    if( boundary_layer_number[1] > 0) {
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[1], Vx_1);
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -41,7 +44,7 @@ int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[1], Vz_2);
     }
 
-    if(boundary_type[2] == BOUNDARY_TYPE_EXPONENT) {
+    if( boundary_layer_number[2] > 0 ) {
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[2], Vx_1);
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -52,7 +55,7 @@ int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[2], Vz_2);
     }
 
-    if(boundary_type[3] == BOUNDARY_TYPE_EXPONENT) {
+    if( boundary_layer_number[30] > 0 ) {
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[3], Vx_1);
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -66,12 +69,12 @@ int abs_exp_velocity(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
 }
 
 int abs_exp_stresses(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
-                     int *boundary_type, int *boundary_layer_number,
+                     int *boundary_layer_number,
                      float *Txx_1, float *Txx_2, float *Tzz_1, float *Tzz_2, float *Txz_1, float *Txz_2)
 {
     int ierr = 0;
 
-    if(boundary_type[0] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[0] > 0) {
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[0], Txx_1);
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -86,7 +89,7 @@ int abs_exp_stresses(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[0], Txz_2);
     }
 
-    if(boundary_type[1] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[1] > 0) {
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[1], Txx_1);
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -101,7 +104,7 @@ int abs_exp_stresses(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[1], Txz_2);
     }
 
-    if(boundary_type[2] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[2] > 0) {
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[2], Txx_1);
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -116,7 +119,7 @@ int abs_exp_stresses(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int hal
                           boundary_layer_number[2], Txz_2);
     }
 
-    if(boundary_type[3] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[3] > 0) {
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[3], Txx_1);
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -235,33 +238,33 @@ float cal_exp(int i)
 }
 
 int abs_exp_velocity_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
-                         int *boundary_type, int *boundary_layer_number,
+                         int *boundary_layer_number,
                          float *Vx, float *Vz)
 {
     int ierr = 0;
 
-    if(boundary_type[0] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[0] > 0) {
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[0], Vx);
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[0], Vz);;
     }
 
-    if(boundary_type[1] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[1] > 0) {
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[1], Vx);
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[1], Vz);
     }
 
-    if(boundary_type[2] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[2] >0 ) {
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[2], Vx);
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[2], Vz);
     }
 
-    if(boundary_type[3] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[3] > 0) {
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[3], Vx);
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -271,12 +274,12 @@ int abs_exp_velocity_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int
 }
 
 int abs_exp_stresses_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int half_fd_stencil,
-                     int *boundary_type, int *boundary_layer_number,
+                     int *boundary_layer_number,
                      float *Txx, float *Tzz, float *Txz)
 {
     int ierr = 0;
 
-    if(boundary_type[0] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[0] > 0) {
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[0], Txx);
         ierr = abs_exp_x1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -285,7 +288,7 @@ int abs_exp_stresses_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int
                           boundary_layer_number[0], Txz);
     }
 
-    if(boundary_type[1] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[1] > 0) {
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[1], Txx);
         ierr = abs_exp_x2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -294,7 +297,7 @@ int abs_exp_stresses_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int
                           boundary_layer_number[1], Txz);
     }
 
-    if(boundary_type[2] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[2] > 0) {
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[2], Txx);
         ierr = abs_exp_z1(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
@@ -303,7 +306,7 @@ int abs_exp_stresses_ssg(int ni1, int ni2, int nk1, int nk2, int nx, int nz, int
                           boundary_layer_number[2], Txz);
     }
 
-    if(boundary_type[3] == BOUNDARY_TYPE_EXPONENT) {
+    if(boundary_layer_number[3] > 0) {
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,
                           boundary_layer_number[3], Txx);
         ierr = abs_exp_z2(ni1, ni2, nk1, nk2, nx, nz, half_fd_stencil,

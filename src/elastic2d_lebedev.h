@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define BOUNDARY_TYPE_FREESURFACE 0
-#define BOUNDARY_TYPE_EXPONENT 1
 
 /* ith-difference to 00 position  */
 #define Dx00(a,fdx,i_diff,ix,iz,nx)   \
@@ -47,11 +45,15 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
                     float *c11_1, float *c13_1, float *c15_1, float *c33_1, float *c35_1, float *c55_1,
                     float *c11_2, float *c13_2, float *c15_2, float *c33_2, float *c35_2, float *c55_2,
                     float *B01, float *B10, struct Src src, int source_impulse_method,
-                    int *boundary_type, int *boundary_layer_number,
-                    float *Txx_1, float *Txx_2, float *Txz_1, float *Txz_2, float *Tzz_1, float *Tzz_2,
-                    float *Vx_1, float *Vx_2, float *Vz_1, float *Vz_2,
-                    float *hTxx_1, float *hTxx_2, float *hTxz_1, float *hTxz_2, float *hTzz_1, float *hTzz_2,
-                    float *hVx_1, float *hVx_2, float *hVz_1, float *hVz_2,
+                    int abs_type, int *boundary_layer_number,
+                    float *Txx00, float *Txx11, float *Txz11, float *Txz00, float *Tzz00, float *Tzz11,
+                    float *Vx01, float *Vx10, float *Vz10, float *Vz01,
+                    float *hTxx00, float *hTxx11, float *hTxz11, float *hTxz00, float *hTzz00, float *hTzz11,
+                    float *hVx01, float *hVx10, float *hVz10, float *hVz01,
+                    float *DxVx00, float *DzVz00, float *DzVx00, float *DxVz00,
+                    float *DxVx11, float *DzVz11, float *DzVx11, float *DxVz11,
+                    float *DxTxx01,float *DzTxz01,float *DxTxz01,float *DzTzz01,
+                    float *DxTxx10,float *DzTxz10,float *DxTxz10,float *DzTzz10,
                     int seismotype, int nreceivers, float *xr, float *zr,
                     int NSTEP_BETWEEN_OUTPUT_SEISMOS,
                     bool save_ASCII_seismograms, bool save_binary_seismograms,
@@ -66,23 +68,27 @@ int elastic2d_lebedev(float dx, float dz, int nx, int nz, int nt, float dt,
 /* RHS of equation of motion */
 int cal_momentum(double *fdx, double *fdz, int half_fd_stencil,
                  int ni1, int ni2, int nk1, int nk2, int nx,
-                 float *hVx_1, float *hVz_1, float *Txx_1, float *Txz_1, float *Tzz_1,
-                 float *hVx_2, float *hVz_2, float *Txx_2, float *Txz_2, float *Tzz_2);
+                 float *hVx01, float *hVz10, float *Txx00, float *Txz11, float *Tzz00,
+                 float *hVx10, float *hVz01, float *Txx11, float *Txz00, float *Tzz11,
+                 float *DxTxx01, float *DzTxz01, float *DxTxz01, float *DzTzz01,
+                 float *DxTxx10, float *DzTxz10, float *DxTxz10, float *DzTzz10);
 
 /* RHS of stress-strain equation (Hook law) */
 int cal_hook(double *fdx, double *fdz, int half_fd_stencil, int ni1, int ni2, int nk1, int nk2, int nx,
-             float *hTxx_1, float *hTzz_1, float *hTxz_1, float *Vx_1 , float *Vz_1,
-             float *hTxx_2, float *hTzz_2, float *hTxz_2, float *Vx_2 , float *Vz_2,
+             float *hTxx00, float *hTzz00, float *hTxz11, float *Vx01 , float *Vz10,
+             float *hTxx11, float *hTzz11, float *hTxz00, float *Vx10 , float *Vz01,
+             float *DxVx00, float *DzVz00, float *DzVx00, float *DxVz00,
+             float *DxVx11, float *DzVz11, float *DzVx11, float *DxVz11,
              float *c11_1 , float *c13_1 , float *c15_1 , float *c33_1, float *c35_1, float *c55_1,
              float *c11_2 , float *c13_2 , float *c15_2 , float *c33_2, float *c35_2, float *c55_2);
 
 int update_velocity(int nx, int nz, float dt,
-        float *Vx_1 , float *Vz_1 , float *Vx_2 , float *Vz_2 ,
-        float *hVx_1, float *hVz_1, float *hVx_2, float *hVz_2,
+        float *Vx01 , float *Vz10 , float *Vx10 , float *Vz01 ,
+        float *hVx01, float *hVz10, float *hVx10, float *hVz01,
         float *B10, float *B01);
 
 int update_stress(int nx, int nz, float dt,
-                  float *Txx_1 , float *Tzz_1 , float *Txz_1 ,
-                  float *Txx_2 , float *Tzz_2 , float *Txz_2 ,
-                  float *hTxx_1, float *hTzz_1, float *hTxz_1,
-                  float *hTxx_2, float *hTzz_2, float *hTxz_2 );
+                  float *Txx00 , float *Tzz00 , float *Txz11,
+                  float *Txx11 , float *Tzz11 , float *Txz00,
+                  float *hTxx00, float *hTzz00, float *hTxz11,
+                  float *hTxx11, float *hTzz11, float *hTxz00 );

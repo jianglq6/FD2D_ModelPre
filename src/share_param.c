@@ -198,20 +198,17 @@ int get_config_info(char *config_file, int *nt, float *dt,
     free(xfin); free(zfin);
 
     /*======================== boundary information ==========================*/
-    read_value_int(fid, "boundary_type_left",  boundary_type+0, &ierr);
-    read_value_int(fid, "boundary_type_right", boundary_type+1, &ierr);
-    read_value_int(fid, "boundary_type_top",   boundary_type+2, &ierr);
-    read_value_int(fid, "boundary_type_bottom",boundary_type+3, &ierr);
+    read_value_int(fid, "abs_boundary_type",  boundary_type, &ierr);
 
-    read_value_int(fid, "boundary_layer_number_left",  boundary_layer_number+0, &ierr);
-    read_value_int(fid, "boundary_layer_number_right", boundary_layer_number+1, &ierr);
-    read_value_int(fid, "boundary_layer_number_top",   boundary_layer_number+2, &ierr);
-    read_value_int(fid, "boundary_layer_number_bottom",boundary_layer_number+3, &ierr);
+    read_value_int(fid, "abs_layer_number_left",  boundary_layer_number+0, &ierr);
+    read_value_int(fid, "abs_layer_number_right", boundary_layer_number+1, &ierr);
+    read_value_int(fid, "abs_layer_number_top",   boundary_layer_number+2, &ierr);
+    read_value_int(fid, "abs_layer_number_bottom",boundary_layer_number+3, &ierr);
+
     fprintf(stdout, "\n-------\nBoundary conditions\n");
-    fprintf(stdout, "   Type of boundary condition (1. exp, 2. ade-cfs-pml 0. free-surface B.C)\n");
-    fprintf(stdout, "    top:%d, bottom: %d, left: %d, right: %d\n",
-            boundary_type[2], boundary_type[3], boundary_type[0], boundary_type[1]);
-    fprintf(stdout, "   Number of boundary layer (if boundary type is free-surface, its number of boundary layer is ignored)\n");
+    fprintf(stdout, "   Type of boundary condition (1. exp, 2. ade-cfs-pml)\n");
+    fprintf(stdout, "    %d\n", *boundary_type);
+    fprintf(stdout, "   Number of boundary layer \n");
     fprintf(stdout, "    top:%d, bottom: %d, left: %d, right: %d\n",
             boundary_layer_number[2], boundary_layer_number[3], boundary_layer_number[0], boundary_layer_number[1]);
 

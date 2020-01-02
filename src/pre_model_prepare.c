@@ -24,7 +24,6 @@
 
 int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
         int effective_para_method, int save_model, int *prepared_media,
-        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2,
         float *xvec1, float *zvec1, float *xvec2, float *zvec2, int nx, int nz, float dx, float dz,
         float *c11_1, float *c13_1, float *c15_1, float *c33_1, float *c35_1, float *c55_1,
         float *c11_2, float *c13_2, float *c15_2, float *c33_2, float *c35_2, float *c55_2,
@@ -93,8 +92,8 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
     }
 
     /* To avoid that the half point have no value after assignment */
-    xmin = xvec1[nghost_x1]; xmax = xvec1[nx-nghost_x2-1];
-    zmin = zvec1[nghost_z1]; zmax = zvec1[nz-nghost_z2-1];
+    xmin = xvec1[0]; xmax = xvec1[nx-1];
+    zmin = zvec1[0]; zmax = zvec1[nz-1];
    for (i = 0; i < number_of_interfaces; i++) {
        for (j = 0; j < interface[i].npoints_interfaces; j++) {
            if ( (interface[i].x_loc[j] - xmin) <= 0 && (interface[i].x_loc[j] - xmin) > -dx/2 )
@@ -118,11 +117,10 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
             ierr = media_parameterization_loc(interface, number_of_interfaces,
                     dx, dz, nx, nz, xvec1, zvec1, xvec2, zvec2,
                     LAM, MU, RHO, L2M,
-                    c11_1, c13_1, c55_1, rho_x, rho_z,
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                    c11_1, c13_1, c55_1, rho_x, rho_z);
             /* get B01, B10 */
-            for (ix = nghost_x1; ix < nx-nghost_x2; ix ++) {
-                for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
+            for (ix = 0; ix < nx; ix ++) {
+                for (iz = 0; iz < nz; iz++) {
                     B01[iz*nx+ix] = 1/rho_x[iz*nx+ix];
                     B10[iz*nx+ix] = 1/rho_z[iz*nx+ix];
                 }
@@ -135,8 +133,7 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
             ierr = media_parameterization_gri(interface, number_of_interfaces,
                     dx, dz, nx, nz, xvec1, zvec1, xvec2, zvec2,
                     LAM, MU, RHO, L2M,
-                    c11_1, c13_1, c55_1, B01, B10, rho_x, mu11,
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                    c11_1, c13_1, c55_1, B01, B10, rho_x, mu11);
             *prepared_media = PREPARE_ISO;
 
             break;
@@ -147,11 +144,10 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
                     dx, dz, nx, nz, xvec1, zvec1, xvec2, zvec2,
                     LAM, MU, RHO, L2M,
                     lam2mu11, lam11, mu00, rho01, rho10,
-                    c11_1, c13_1, c55_1, rho_x, rho_z,
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                    c11_1, c13_1, c55_1, rho_x, rho_z);
             /* get B01, B10 */
-            for (ix = nghost_x1; ix < nx-nghost_x2; ix ++) {
-                for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
+            for (ix = 0; ix < nx; ix ++) {
+                for (iz = 0; iz < nz; iz++) {
                     B01[iz*nx+ix] = 1/rho_x[iz*nx+ix];
                     B10[iz*nx+ix] = 1/rho_z[iz*nx+ix];
                 }
@@ -168,11 +164,10 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
                     lam2mu00, lam2mu11, lam00, lam11, mu00, mu11, rho01, rho10,
                     c11_1, c13_1, c15_1, c33_1, c35_1, c55_1,
                     c11_2, c13_2, c15_2, c33_2, c35_2, c55_2,
-                    rho_x, rho_z,
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                    rho_x, rho_z);
             /* get B01, B10 */
-            for (ix = nghost_x1; ix < nx-nghost_x2; ix ++) {
-                for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
+            for (ix = 0; ix < nx; ix ++) {
+                for (iz = 0; iz < nz; iz++) {
                     B01[iz*nx+ix] = 1/rho_x[iz*nx+ix];
                     B10[iz*nx+ix] = 1/rho_z[iz*nx+ix];
                 }
@@ -185,55 +180,54 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
 
 
     /* boundary expansion */
-    if (*prepared_media == PREPARE_ISO) {
-        ierr = boundary_expansion(c11_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c13_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c55_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(B01, nx, nz,   \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(B10, nx, nz,   \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-    }
-    else if (*prepared_media == PREPARE_TTI) {
-        ierr = boundary_expansion(c11_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c13_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c15_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c33_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c35_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c55_1, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c11_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c13_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c15_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c33_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c35_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(c55_2, nx, nz, \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(B01, nx, nz,   \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-        ierr = boundary_expansion(B10, nx, nz,   \
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
-    }
+    //if (*prepared_media == PREPARE_ISO) {
+    //    ierr = boundary_expansion(c11_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c13_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c55_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(B01, nx, nz,   \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(B10, nx, nz,   \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //}
+    //else if (*prepared_media == PREPARE_TTI) {
+    //    ierr = boundary_expansion(c11_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c13_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c15_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c33_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c35_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c55_1, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c11_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c13_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c15_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c33_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c35_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(c55_2, nx, nz, \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(B01, nx, nz,   \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //    ierr = boundary_expansion(B10, nx, nz,   \
+    //                nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    //}
 
 
     /* save model */
     if (save_model) {
         if (*prepared_media == PREPARE_ISO) {
-            ierr = write_model_iso(save_model, c11_1, c13_1, c55_1, rho_x, rho_z,
-                    nx, nz, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+            ierr = write_model_iso(save_model, c11_1, c13_1, c55_1, rho_x, rho_z, nx, nz);
         }
         else if (*prepared_media == PREPARE_TTI) {
             ierr = write_model_TTI(save_model,
@@ -241,8 +235,7 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
                     c15_1, c35_1, c55_1,
                     c11_2, c13_2, c33_2,
                     c15_2, c35_2, c55_2,
-                    B01, B10, nx, nz,
-                    nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+                    B01, B10, nx, nz);
         }
     }
 
@@ -260,47 +253,46 @@ int model_prepare(int nbmodels, char *materialfile, char *interfacesfile,
     return ierr;
 }
 
-int boundary_expansion(float *u, int nx, int nz,
-        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
-{
-    int ix, iz;
-
-    /* top */
-    for (ix = 0; ix < nx; ix ++) {
-        for (iz = 0; iz < nghost_z1; iz++) {
-            u[iz*nx+ix] = u[nghost_z1*nx+ix];
-        }
-    }
-
-
-    /* bottom */
-    for (ix = 0; ix < nx; ix ++) {
-        for (iz = nz-nghost_z2; iz < nz; iz++) {
-            u[iz*nx+ix] = u[(nz-nghost_z2-1)*nx+ix];
-        }
-    }
-
-    /* left */
-    for (iz = 0; iz < nz; iz++) {
-        for (ix = 0; ix < nghost_x1+1; ix ++) {
-            u[iz*nx+ix] = u[iz*nx+nghost_x1+1];
-        }
-    }
-
-    /* right */
-    for (ix = nx-nghost_x2-1; ix < nx; ix ++) {
-        for (iz = 0; iz < nz; iz++) {
-            u[iz*nx+ix] = u[iz*nx+(nx-nghost_x2-8)];
-        }
-    }
-
-    return 0;
-}
+//int boundary_expansion(float *u, int nx, int nz,
+//        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
+//{
+//    int ix, iz;
+//
+//    /* top */
+//    for (ix = 0; ix < nx; ix ++) {
+//        for (iz = 0; iz < nghost_z1; iz++) {
+//            u[iz*nx+ix] = u[nghost_z1*nx+ix];
+//        }
+//    }
+//
+//
+//    /* bottom */
+//    for (ix = 0; ix < nx; ix ++) {
+//        for (iz = nz-nghost_z2; iz < nz; iz++) {
+//            u[iz*nx+ix] = u[(nz-nghost_z2-1)*nx+ix];
+//        }
+//    }
+//
+//    /* left */
+//    for (iz = 0; iz < nz; iz++) {
+//        for (ix = 0; ix < nghost_x1+1; ix ++) {
+//            u[iz*nx+ix] = u[iz*nx+nghost_x1+1];
+//        }
+//    }
+//
+//    /* right */
+//    for (ix = nx-nghost_x2-1; ix < nx; ix ++) {
+//        for (iz = 0; iz < nz; iz++) {
+//            u[iz*nx+ix] = u[iz*nx+(nx-nghost_x2-8)];
+//        }
+//    }
+//
+//    return 0;
+//}
 
 
 int write_model_iso(int save_model, float *lam2mu, float *lam, float *muxz,
-        float *rho_x, float *rho_z, int nx_all, int nz_all,
-        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
+        float *rho_x, float *rho_z, int nx_all, int nz_all)
 {
     int i, j, nx, nz, indx;
     FILE *fp;
@@ -347,8 +339,7 @@ int write_model_TTI(int save_model,
         float *c15_1, float *c35_1, float *c55_1,
         float *c11_2, float *c13_2, float *c33_2,
         float *c15_2, float *c35_2, float *c55_2,
-        float *B01, float *B10, int nx_all, int nz_all,
-        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
+        float *B01, float *B10, int nx_all, int nz_all)
 {
     int i, j, nx;
     FILE *fp;

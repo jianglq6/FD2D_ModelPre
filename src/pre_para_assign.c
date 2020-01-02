@@ -82,8 +82,7 @@ void Polygon_Fill(int IMAGE_BOT, int IMAGE_TOP, int IMAGE_LEFT, int IMAGE_RIGHT,
 
 /* assignment the multi-layer model with a set of values */
 int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
-        float xmin, float zmin, float dx, float dz, int nx, int nz, float *value, float *data,
-        int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
+        float xmin, float zmin, float dx, float dz, int nx, int nz, float *value, float *data)
 {
     float *interface_x_index = NULL, *interface_z_index = NULL;
     int i_interface, i_point, ierr = 0;
@@ -107,7 +106,7 @@ int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
         free(interface_z_index);
     }
 
-    ierr = check_assignment(data, nz, nx, nghost_x1, nghost_x2, nghost_z1, nghost_z2);
+    ierr = check_assignment(data, nz, nx);
 
     if (ierr == 0)
         return 0;
@@ -116,12 +115,11 @@ int parameter_assignment(struct interfaces *interface, int number_of_interfaces,
 }
 
 /* check if all grid points are assigned */
-int check_assignment(float *data, int nz, int nx,
-     int nghost_x1, int nghost_x2, int nghost_z1, int nghost_z2)
+int check_assignment(float *data, int nz, int nx)
 {
     int iz, ix;
-    for (iz = nghost_z1; iz < nz-nghost_z2; iz++) {
-        for (ix = nghost_x1; ix < nx-nghost_x2; ix++) {
+    for (iz = 0; iz < nz; iz++) {
+        for (ix = 0; ix < nx; ix++) {
             if (data[nx*iz + ix] <= 0.0) {
                 printf("Assignment error: row %d column %d has the wrong value, please check the interface file!\n",iz,ix);
                 return 1;
