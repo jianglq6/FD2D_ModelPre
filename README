@@ -58,3 +58,15 @@
 
   4) cd OUTPUT/ file for your results
      or you can cd mfiles/plot_* to plot the wavefields or seismo
+
+4 Availability and use of the program package
+
+  Upon request from the authors.
+  Contact the authors to get the latest version. 
+
+  If you use this code for your own research, please cite:
+  
+   Jiang, L. and Zhang, W., 2021. TTI equivalent medium parametrization method 
+for the seismic waveform modelling of heterogeneous media with coarse grids. 
+Geophysical Journal International, 227(3), pp.2016-2043. 
+
